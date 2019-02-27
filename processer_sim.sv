@@ -9,9 +9,11 @@ reg [63:0] iPlayer;
 reg [63:0] iOpponent;
 wire solved;
 reg [4:0] o;
+wire [63:0] oPlayer;
+wire [63:0] oOpponent;
 wire signed [7:0] res;
 
-processer TARGET(
+pipeline TARGET(
   .*
 );
 
@@ -49,7 +51,7 @@ task tsk_check;
       $display("%d %h %d", i, o, res);
       if (solved == 1'b1) begin
         $display("solved!");
-        $display("%d", res);
+        $display("%h %h %d", oPlayer, oOpponent, res);
         if (res != 16) begin
           $display("wrong answer");
         end else begin

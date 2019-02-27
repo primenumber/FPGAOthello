@@ -1,6 +1,6 @@
 module popcount(
   input wire [63:0] x,
-  output wire [5:0] o
+  output wire [6:0] o
 );
 
 wire [4:0] tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;

@@ -1,7 +1,7 @@
 all:
 	vlib work
 	vlog -work work -sv processer_sim.sv
-	vlog -work work -sv processer.sv
+	vlog -work work -sv pipeline.sv
 	vlog -work work -sv score.sv
 	vlog -work work -sv popcount.sv
 	vlog -work work -sv popcount_8bit.sv
