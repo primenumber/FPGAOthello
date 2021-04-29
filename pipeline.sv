@@ -137,7 +137,7 @@ logic [63:0] opponent3;
 logic [63:0] remain3;
 logic [63:0] posbit3;
 logic [6:0] pos3_w;
-logic [6:0] pos3;
+logic [5:0] pos3;
 logic [6:0] pcnt_w;
 logic [6:0] ocnt_w;
 logic [6:0] pcnt3;
@@ -164,7 +164,7 @@ always @(posedge iCLOCK) begin
     if (mode2 != M_START) begin
       pcnt3 <= pcnt_w;
       ocnt3 <= ocnt_w;
-      pos3 <= pos3_w;
+      pos3 <= pos3_w[5:0];
       if (|remain2 == 1'b0) begin
         if (pass2) begin
           if (prev_passed2) begin
@@ -216,7 +216,6 @@ logic [63:0] player4;
 logic [63:0] opponent4;
 logic [63:0] remain4;
 logic [63:0] posbit4;
-logic [6:0] pos4;
 logic [6:0] pcnt4;
 logic [6:0] ocnt4;
 logic [2:0] mode4;
@@ -260,7 +259,6 @@ always @(posedge iCLOCK) begin
     opponent4 <= opponent3;
     remain4 <= remain3;
     posbit4 <= posbit3;
-    pos4 <= pos3;
     pcnt4 <= pcnt3;
     ocnt4 <= ocnt3;
     mode4 <= mode3;
@@ -284,7 +282,6 @@ logic [63:0] player5;
 logic [63:0] opponent5;
 logic [63:0] remain5;
 logic [63:0] posbit5;
-logic [6:0] pos5;
 logic [6:0] pcnt5;
 logic [6:0] ocnt5;
 logic [2:0] mode5;
@@ -305,7 +302,6 @@ always @(posedge iCLOCK) begin
     opponent5 <= opponent4;
     remain5 <= remain4;
     posbit5 <= posbit4;
-    pos5 <= pos4;
     pcnt5 <= pcnt4;
     ocnt5 <= ocnt4;
     mode5 <= mode4;
@@ -330,7 +326,6 @@ logic [63:0] player6;
 logic [63:0] opponent6;
 logic [63:0] remain6;
 logic [63:0] posbit6;
-logic [6:0] pos6;
 logic [6:0] pcnt6;
 logic [6:0] ocnt6;
 logic [2:0] mode6;
@@ -368,7 +363,6 @@ always @(posedge iCLOCK) begin
     opponent6 <= opponent5;
     remain6 <= remain5;
     posbit6 <= posbit5;
-    pos6 <= pos5;
     pcnt6 <= pcnt5;
     ocnt6 <= ocnt5;
     mode6 <= mode5;
