@@ -10,7 +10,6 @@ module pipeline(
   output reg [4:0] o
 );
 
-localparam PIPELINE_DEPTH = 7;
 localparam MEMSIZE = 256;
 
 localparam M_NORMAL = 3'h0,
