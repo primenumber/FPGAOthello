@@ -11,6 +11,7 @@ module pipeline(
 );
 
 localparam PIPELINE_DEPTH = 9;
+localparam MEMSIZE = 256;
 
 localparam M_NORMAL = 3'h0,
            M_COMMIT = 3'h1,
@@ -27,7 +28,7 @@ function signed [7:0] max;
 endfunction
 
 // Stack
-logic [153:0] stack [0:PIPELINE_DEPTH-1][0:15];
+logic [153:0] stack [0:MEMSIZE-1];
 
 // PREV-WRITE2 to FETCH
 logic [63:0] x0;
@@ -58,7 +59,7 @@ logic [2:0] mode1;
 always @(posedge iCLOCK) begin
   if (enable) begin
     if (is_moved) begin
-      stack[stack_id0][stack_index0] <= {x0, y0, result0, alpha0, beta0, 1'b1, 1'b0};
+      stack[{stack_id0, stack_index0}] <= {x0, y0, result0, alpha0, beta0, 1'b1, 1'b0};
       x1 <= x0;
       y1 <= y0;
       result1 <= result0;
@@ -67,7 +68,7 @@ always @(posedge iCLOCK) begin
       pass1 <= 1'b1;
       prev_passed1 <= 1'b0;
     end else begin
-      {x1, y1, result1, alpha1, beta1, pass1, prev_passed1} <= stack[stack_id0][stack_index0];
+      {x1, y1, result1, alpha1, beta1, pass1, prev_passed1} <= stack[{stack_id0, stack_index0}];
     end
     stack_index1 <= stack_index0;
     stack_id1 <= stack_id0;
@@ -445,7 +446,7 @@ logic move8;
 
 always @(posedge iCLOCK) begin
   if (enable) begin
-    $display("At7: %h %h %h %d %d", player7, opponent7, oflip, pos7, mode7);
+    //$display("At7: %h %h %h %d %d", player7, opponent7, oflip, pos7, mode7);
     case (mode7)
       M_NORMAL: begin
         if (|oflip) begin
@@ -489,7 +490,7 @@ always @(posedge iCLOCK) begin
     case (mode8)
       M_NORMAL: begin
         if (move8) begin
-          stack[stack_id8][stack_index8] <= {x8 ^ posbit8, y8 ^ posbit8, result8, alpha8, beta8, 1'b0, prev_passed8};
+          stack[{stack_id8, stack_index8}] <= {x8 ^ posbit8, y8 ^ posbit8, result8, alpha8, beta8, 1'b0, prev_passed8};
           x0 <= ~next_op8;
           y0 <= ~next_me8;
           result0 <= -8'd64;
@@ -497,7 +498,7 @@ always @(posedge iCLOCK) begin
           beta0 <= -alpha8;
           stack_index0 <= stack_index8 + 1;
         end else begin
-          stack[stack_id8][stack_index8] <= {x8 ^ posbit8, y8 ^ posbit8, result8, alpha8, beta8, pass8, prev_passed8};
+          stack[{stack_id8, stack_index8}] <= {x8 ^ posbit8, y8 ^ posbit8, result8, alpha8, beta8, pass8, prev_passed8};
           stack_index0 <= stack_index8;
         end
         solved <= 1'b0;
@@ -550,7 +551,7 @@ always @(posedge iCLOCK) begin
       end
       M_PASS: begin
         is_commit <= 1'b0;
-        stack[stack_id8][stack_index8] <= {~player8, ~opponent8, -8'd64, -beta8, -alpha8, 1'b1, 1'b1};
+        stack[{stack_id8, stack_index8}] <= {~player8, ~opponent8, -8'd64, -beta8, -alpha8, 1'b1, 1'b1};
         stack_index0 <= stack_index8;
         is_moved <= move8;
         solved <= 1'b0;
