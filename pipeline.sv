@@ -10,7 +10,7 @@ module pipeline(
   output reg [4:0] o
 );
 
-localparam PIPELINE_DEPTH = 9;
+localparam PIPELINE_DEPTH = 7;
 localparam MEMSIZE = 256;
 
 localparam M_NORMAL = 3'h0,
@@ -271,7 +271,7 @@ always @(posedge iCLOCK) begin
   end
 end
 
-// EXEC2 to EXEC3
+// EXEC2 to WRITE1
 logic [63:0] x5;
 logic [63:0] y5;
 logic signed [7:0] result5;
@@ -293,12 +293,6 @@ logic signed [7:0] score5;
 
 always @(posedge iCLOCK) begin
   if (enable) begin
-    case (mode4)
-      M_COMMIT:;
-      M_SAVE:;
-      M_PASS:;
-      M_NORMAL:;
-    endcase
     x5 <= x4;
     y5 <= y4;
     result5 <= result4;
@@ -323,7 +317,7 @@ always @(posedge iCLOCK) begin
   end
 end
 
-// EXEC3 to EXEC4
+// WRITE1 to WRITE2
 logic [63:0] x6;
 logic [63:0] y6;
 logic signed [7:0] result6;
@@ -342,14 +336,25 @@ logic [6:0] pcnt6;
 logic [6:0] ocnt6;
 logic [2:0] mode6;
 logic signed [7:0] score6;
+logic [63:0] next_me6;
+logic [63:0] next_op6;
+logic move6;
 
 always @(posedge iCLOCK) begin
   if (enable) begin
     case (mode5)
-      M_COMMIT:;
-      M_SAVE:;
-      M_PASS:;
-      M_NORMAL:;
+      M_NORMAL: begin
+        if (|oflip) begin
+          next_me6 <= opponent5 ^ oflip;
+          next_op6 <= (player5 ^ oflip) | posbit5;
+          move6 <= 1'b1;
+        end else begin
+          move6 <= 1'b0;
+        end
+      end
+      default: begin
+        move6 <= 1'b0;
+      end
     endcase
     x6 <= x5;
     y6 <= y5;
@@ -375,149 +380,39 @@ always @(posedge iCLOCK) begin
   end
 end
 
-// EXEC4 to WRITE1
-logic [63:0] x7;
-logic [63:0] y7;
-logic signed [7:0] result7;
-logic signed [7:0] alpha7;
-logic signed [7:0] beta7;
-logic pass7;
-logic prev_passed7;
-logic [3:0] stack_index7;
-logic [3:0] stack_id7 = 7;
-logic [63:0] player7;
-logic [63:0] opponent7;
-logic [63:0] remain7;
-logic [63:0] posbit7;
-logic [6:0] pos7;
-logic [6:0] pcnt7;
-logic [6:0] ocnt7;
-logic [2:0] mode7;
-logic signed [7:0] score7;
-
 always @(posedge iCLOCK) begin
   if (enable) begin
-    x7 <= x6;
-    y7 <= y6;
-    result7 <= result6;
-    alpha7 <= alpha6;
-    beta7 <= beta6;
-    pass7 <= pass6;
-    prev_passed7 <= prev_passed6;
-    stack_index7 <= stack_index6;
-    stack_id7 <= stack_id6;
-    player7 <= player6;
-    opponent7 <= opponent6;
-    remain7 <= remain6;
-    posbit7 <= posbit6;
-    pos7 <= pos6;
-    pcnt7 <= pcnt6;
-    ocnt7 <= ocnt6;
-    mode7 <= mode6;
-    score7 <= score6;
-  end else begin
-    stack_index7 <= 0;
-    mode7 <= M_START;
-  end
-end
-
-// WRITE1 to WRITE2
-logic [63:0] x8;
-logic [63:0] y8;
-logic signed [7:0] result8;
-logic signed [7:0] alpha8;
-logic signed [7:0] beta8;
-logic pass8;
-logic prev_passed8;
-logic [3:0] stack_index8;
-logic [3:0] stack_id8 = 8;
-logic [63:0] player8;
-logic [63:0] opponent8;
-logic [63:0] remain8;
-logic [63:0] posbit8;
-logic [6:0] pos8;
-logic [6:0] pcnt8;
-logic [6:0] ocnt8;
-logic [2:0] mode8;
-logic signed [7:0] score8;
-logic [63:0] next_me8;
-logic [63:0] next_op8;
-logic move8;
-
-always @(posedge iCLOCK) begin
-  if (enable) begin
-    //$display("At7: %h %h %h %d %d", player7, opponent7, oflip, pos7, mode7);
-    case (mode7)
+    case (mode6)
       M_NORMAL: begin
-        if (|oflip) begin
-          next_me8 <= opponent7 ^ oflip;
-          next_op8 <= (player7 ^ oflip) | posbit7;
-          move8 <= 1'b1;
-        end else begin
-          move8 <= 1'b0;
-        end
-      end
-      default: begin
-        move8 <= 1'b0;
-      end
-    endcase
-    x8 <= x7;
-    y8 <= y7;
-    result8 <= result7;
-    alpha8 <= alpha7;
-    beta8 <= beta7;
-    pass8 <= pass7;
-    prev_passed8 <= prev_passed7;
-    stack_index8 <= stack_index7;
-    stack_id8 <= stack_id7;
-    player8 <= player7;
-    opponent8 <= opponent7;
-    remain8 <= remain7;
-    posbit8 <= posbit7;
-    pos8 <= pos7;
-    pcnt8 <= pcnt7;
-    ocnt8 <= ocnt7;
-    mode8 <= mode7;
-    score8 <= score7;
-  end else begin
-    stack_index8 <= 0;
-    mode8 <= M_START;
-  end
-end
-
-always @(posedge iCLOCK) begin
-  if (enable) begin
-    case (mode8)
-      M_NORMAL: begin
-        if (move8) begin
-          stack[{stack_id8, stack_index8}] <= {x8 ^ posbit8, y8 ^ posbit8, result8, alpha8, beta8, 1'b0, prev_passed8};
-          x0 <= ~next_op8;
-          y0 <= ~next_me8;
+        if (move6) begin
+          stack[{stack_id6, stack_index6}] <= {x6 ^ posbit6, y6 ^ posbit6, result6, alpha6, beta6, 1'b0, prev_passed6};
+          x0 <= ~next_op6;
+          y0 <= ~next_me6;
           result0 <= -8'd64;
-          alpha0 <= -beta8;
-          beta0 <= -alpha8;
-          stack_index0 <= stack_index8 + 1;
+          alpha0 <= -beta6;
+          beta0 <= -alpha6;
+          stack_index0 <= stack_index6 + 1;
         end else begin
-          stack[{stack_id8, stack_index8}] <= {x8 ^ posbit8, y8 ^ posbit8, result8, alpha8, beta8, pass8, prev_passed8};
-          stack_index0 <= stack_index8;
+          stack[{stack_id6, stack_index6}] <= {x6 ^ posbit6, y6 ^ posbit6, result6, alpha6, beta6, pass6, prev_passed6};
+          stack_index0 <= stack_index6;
         end
         solved <= 1'b0;
         is_commit <= 1'b0;
-        is_moved <= move8;
+        is_moved <= move6;
       end
       M_SAVE: begin
-        score0 <= score8;
-        if (stack_index8) begin
+        score0 <= score6;
+        if (stack_index6) begin
           is_commit <= 1'b1;
-          stack_index0 <= stack_index8 - 1;
+          stack_index0 <= stack_index6 - 1;
           is_moved <= 1'b0;
           solved <= 1'b0;
         end else begin
           is_commit <= 1'b0;
           solved <= 1'b1;
-          oPlayer <= player8;
-          oOpponent <= opponent8;
-          res <= -score8;
+          oPlayer <= player6;
+          oOpponent <= opponent6;
+          res <= -score6;
           stack_index0 <= 0;
           is_moved <= 1'b1;
           x0 <= ~iOpponent;
@@ -528,18 +423,18 @@ always @(posedge iCLOCK) begin
         end
       end
       M_COMMIT: begin
-        score0 <= prev_passed8 ? result8 : -result8;
-        if (stack_index8) begin
+        score0 <= prev_passed6 ? result6 : -result6;
+        if (stack_index6) begin
           is_commit <= 1'b1;
-          stack_index0 <= stack_index8 - 1;
+          stack_index0 <= stack_index6 - 1;
           is_moved <= 1'b0;
           solved <= 1'b0;
         end else begin
           is_commit <= 1'b0;
           solved <= 1'b1;
-          oPlayer <= player8;
-          oOpponent <= opponent8;
-          res <= prev_passed8 ? -result8 : result8;
+          oPlayer <= player6;
+          oOpponent <= opponent6;
+          res <= prev_passed6 ? -result6 : result6;
           stack_index0 <= 0;
           is_moved <= 1'b1;
           x0 <= ~iOpponent;
@@ -551,9 +446,9 @@ always @(posedge iCLOCK) begin
       end
       M_PASS: begin
         is_commit <= 1'b0;
-        stack[{stack_id8, stack_index8}] <= {~player8, ~opponent8, -8'd64, -beta8, -alpha8, 1'b1, 1'b1};
-        stack_index0 <= stack_index8;
-        is_moved <= move8;
+        stack[{stack_id6, stack_index6}] <= {~player6, ~opponent6, -8'd64, -beta6, -alpha6, 1'b1, 1'b1};
+        stack_index0 <= stack_index6;
+        is_moved <= move6;
         solved <= 1'b0;
       end
       M_START: begin
@@ -568,7 +463,7 @@ always @(posedge iCLOCK) begin
         mode0 <= M_NORMAL;
       end
     endcase
-    stack_id0 <= stack_id8;
+    stack_id0 <= stack_id6;
   end else begin
     stack_index0 <= 0;
     mode0 <= M_START;

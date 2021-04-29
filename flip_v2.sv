@@ -157,13 +157,8 @@ end
 wire [63:0] a1h8 = col_reg >= row_reg ? scatter_a1h8(flip_a1h8) << shift_a1h8_reg : scatter_a1h8(flip_a1h8) >> shift_a1h8_reg;
 wire [63:0] a8h1 = icol_reg >= row_reg ? scatter_a8h1(flip_a8h1) >> shift_a8h1_reg : scatter_a8h1(flip_a8h1) << shift_a8h1_reg;
 
-reg [63:0] buffer;
-reg [63:0] buffer2;
-
 always@(posedge clock) begin
-  buffer <= flip_h << {row_reg, 3'h0} | scatter_v(flip_v) << col_reg | a1h8 | a8h1;
-  buffer2 <= buffer;
-  flip <= buffer2;
+  flip <= flip_h << {row_reg, 3'h0} | scatter_v(flip_v) << col_reg | a1h8 | a8h1;
 end
 
 endmodule
