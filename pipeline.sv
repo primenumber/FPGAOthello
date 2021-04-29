@@ -26,29 +26,8 @@ function signed [7:0] max;
   end
 endfunction
 
-logic [153:0] din0;
-logic [153:0] dout0;
-logic [3:0] stack_index0;
-logic [3:0] stack_id0 = 0;
-logic we0;
-logic [153:0] din8;
-logic [153:0] dout8;
-logic [3:0] stack_index8;
-logic [3:0] stack_id8 = 8;
-logic we8;
-
 // Stack
-stack stk(
-    .BRAM_PORTA_addr({stack_id0, stack_index0}),
-    .BRAM_PORTA_clk(iCLOCK),
-    .BRAM_PORTA_din(din0),
-    .BRAM_PORTA_dout(dout0),
-    .BRAM_PORTA_we(we0),
-    .BRAM_PORTB_addr({stack_id8, stack_index8}),
-    .BRAM_PORTB_clk(iCLOCK),
-    .BRAM_PORTB_din(din8),
-    .BRAM_PORTB_dout(dout8),
-    .BRAM_PORTB_we(we8));
+logic [153:0] stack [0:PIPELINE_DEPTH-1][0:15];
 
 // PREV-WRITE2 to FETCH
 logic [63:0] x0;
@@ -56,6 +35,8 @@ logic [63:0] y0;
 logic signed [7:0] result0;
 logic signed [7:0] alpha0;
 logic signed [7:0] beta0;
+logic [3:0] stack_index0;
+logic [3:0] stack_id0 = 0;
 logic is_moved;
 logic is_commit;
 logic signed [7:0] score0;
@@ -77,8 +58,7 @@ logic [2:0] mode1;
 always @(posedge iCLOCK) begin
   if (enable) begin
     if (is_moved) begin
-      we0 <= 1'b1;
-      din0 <= {x0, y0, result0, alpha0, beta0, 1'b1, 1'b0};
+      stack[stack_id0][stack_index0] <= {x0, y0, result0, alpha0, beta0, 1'b1, 1'b0};
       x1 <= x0;
       y1 <= y0;
       result1 <= result0;
@@ -87,8 +67,7 @@ always @(posedge iCLOCK) begin
       pass1 <= 1'b1;
       prev_passed1 <= 1'b0;
     end else begin
-      we0 <= 1'b1;
-      {x1, y1, result1, alpha1, beta1, pass1, prev_passed1} <= dout0;
+      {x1, y1, result1, alpha1, beta1, pass1, prev_passed1} <= stack[stack_id0][stack_index0];
     end
     stack_index1 <= stack_index0;
     stack_id1 <= stack_id0;
@@ -99,7 +78,6 @@ always @(posedge iCLOCK) begin
     end
     mode1 <= mode0;
   end else begin
-    we0 <= 1'b0;
     stack_index1 <= 0;
     mode1 <= M_START;
   end
@@ -450,6 +428,8 @@ logic signed [7:0] alpha8;
 logic signed [7:0] beta8;
 logic pass8;
 logic prev_passed8;
+logic [3:0] stack_index8;
+logic [3:0] stack_id8 = 8;
 logic [63:0] player8;
 logic [63:0] opponent8;
 logic [63:0] remain8;
@@ -509,8 +489,7 @@ always @(posedge iCLOCK) begin
     case (mode8)
       M_NORMAL: begin
         if (move8) begin
-          we8 <= 1'b1;
-          din8 <= {x8 ^ posbit8, y8 ^ posbit8, result8, alpha8, beta8, 1'b0, prev_passed8};
+          stack[stack_id8][stack_index8] <= {x8 ^ posbit8, y8 ^ posbit8, result8, alpha8, beta8, 1'b0, prev_passed8};
           x0 <= ~next_op8;
           y0 <= ~next_me8;
           result0 <= -8'd64;
@@ -518,8 +497,7 @@ always @(posedge iCLOCK) begin
           beta0 <= -alpha8;
           stack_index0 <= stack_index8 + 1;
         end else begin
-          we8 <= 1'b1;
-          din8 <= {x8 ^ posbit8, y8 ^ posbit8, result8, alpha8, beta8, pass8, prev_passed8};
+          stack[stack_id8][stack_index8] <= {x8 ^ posbit8, y8 ^ posbit8, result8, alpha8, beta8, pass8, prev_passed8};
           stack_index0 <= stack_index8;
         end
         solved <= 1'b0;
@@ -527,7 +505,6 @@ always @(posedge iCLOCK) begin
         is_moved <= move8;
       end
       M_SAVE: begin
-        we8 <= 1'b0;
         score0 <= score8;
         if (stack_index8) begin
           is_commit <= 1'b1;
@@ -550,7 +527,6 @@ always @(posedge iCLOCK) begin
         end
       end
       M_COMMIT: begin
-        we8 <= 1'b0;
         score0 <= prev_passed8 ? result8 : -result8;
         if (stack_index8) begin
           is_commit <= 1'b1;
@@ -574,15 +550,13 @@ always @(posedge iCLOCK) begin
       end
       M_PASS: begin
         is_commit <= 1'b0;
-        we8 <= 1'b1;
-        din8 <= {~player8, ~opponent8, -8'd64, -beta8, -alpha8, 1'b1, 1'b1};
+        stack[stack_id8][stack_index8] <= {~player8, ~opponent8, -8'd64, -beta8, -alpha8, 1'b1, 1'b1};
         stack_index0 <= stack_index8;
         is_moved <= move8;
         solved <= 1'b0;
       end
       M_START: begin
         is_commit <= 1'b0;
-        we8 <= 1'b0;
         stack_index0 <= 0;
         is_moved <= 1'b1;
         x0 <= ~iOpponent;
@@ -592,14 +566,11 @@ always @(posedge iCLOCK) begin
         beta0 <= 8'd64;
         mode0 <= M_NORMAL;
       end
-      default:
-        we8 <= 1'b0;
     endcase
     stack_id0 <= stack_id8;
   end else begin
     stack_index0 <= 0;
     mode0 <= M_START;
-    we8 <= 1'b0;
   end
 end
 
