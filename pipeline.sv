@@ -26,9 +26,6 @@ function signed [7:0] max;
   end
 endfunction
 
-// Stack
-logic [153:0] stack [0:MEMSIZE-1];
-
 // PREV-WRITE2 to FETCH
 logic [63:0] x0;
 logic [63:0] y0;
@@ -55,10 +52,12 @@ logic [3:0] stack_id1 = 1;
 logic signed [7:0] score1;
 logic [2:0] mode1;
 
+wire [7:0] raddr = {stack_id0, stack_index0};
+wire [153:0] rdata;
+
 always @(posedge iCLOCK) begin
   if (enable) begin
     if (is_moved) begin
-      stack[{stack_id0, stack_index0}] <= {x0, y0, result0, alpha0, beta0, 1'b1, 1'b0};
       x1 <= x0;
       y1 <= y0;
       result1 <= result0;
@@ -67,7 +66,7 @@ always @(posedge iCLOCK) begin
       pass1 <= 1'b1;
       prev_passed1 <= 1'b0;
     end else begin
-      {x1, y1, result1, alpha1, beta1, pass1, prev_passed1} <= stack[{stack_id0, stack_index0}];
+      {x1, y1, result1, alpha1, beta1, pass1, prev_passed1} <= rdata;
     end
     stack_index1 <= stack_index0;
     stack_id1 <= stack_id0;
@@ -462,16 +461,24 @@ always @(posedge iCLOCK) begin
         alpha0 <= -8'd64;
         beta0 <= 8'd64;
         mode0 <= M_NORMAL;
+        solved <= 1'b0;
       end
     endcase
-    if (we) begin
-      stack[waddr] <= wdata;
-    end
     stack_id0 <= stack_id6;
   end else begin
     stack_index0 <= 0;
     mode0 <= M_START;
+    solved <= 1'b0;
   end
 end
+
+// Stack
+bram bram(
+  .clock(iCLOCK),
+  .ra(raddr),
+  .rd(rdata),
+  .we(we),
+  .wa(waddr),
+  .wd(wdata));
 
 endmodule
