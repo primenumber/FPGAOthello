@@ -410,6 +410,7 @@ always @(posedge iCLOCK) begin
           solved <= 1'b0;
         end else begin
           is_commit <= 1'b0;
+          stack_index0 <= 0;
           solved <= 1'b1;
           oPlayer <= player6;
           oOpponent <= opponent6;
@@ -432,12 +433,13 @@ always @(posedge iCLOCK) begin
           solved <= 1'b0;
         end else begin
           is_commit <= 1'b0;
+          stack_index0 <= 0;
+          is_moved <= 1'b1;
           solved <= 1'b1;
           oPlayer <= player6;
           oOpponent <= opponent6;
           res <= prev_passed6 ? -result6 : result6;
           stack_index0 <= 0;
-          is_moved <= 1'b1;
           x0 <= ~iOpponent;
           y0 <= ~iPlayer;
           result0 <= -8'd64;
