@@ -225,12 +225,12 @@ logic signed [7:0] score4;
 
 logic [63:0] oflip;
 
-flip flip(
-  .*,
-  .iPlayer(player3),
-  .iOpponent(opponent3),
-  .iPos(pos3),
-  .oFlip(oflip)
+flip_v2 flip(
+  .clock(iCLOCK),
+  .player(player3),
+  .opponent(opponent3),
+  .pos(pos3),
+  .flip(oflip)
 );
 
 always @(posedge iCLOCK) begin

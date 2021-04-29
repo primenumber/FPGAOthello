@@ -1,4 +1,33 @@
-all:
+FLIP8_SRCS:=flip_8bit.sv flip_8bit_half.sv
+TEST_FLIP8_SRCS:=test_flip8.sv $(FLIP8_SRCS)
+FLIP_SRCS:=flip_v2.sv extract_v.sv extract_a1h8.sv extract_a8h1.sv shift64.sv $(FLIP8_SRCS)
+TEST_FLIP_SRCS:=test_flip_v2.sv flip.sv flip_impl.sv upper_bit.sv $(FLIP_SRCS)
+SRCS:=iv_sim.sv pipeline.sv bram.sv flip.sv flip_impl.sv popcount.sv popcount_8bit.sv upper_bit.sv $(FLIP_SRCS)
+IVFLAGS:=-g2012
+
+test-flip8: $(TEST_FLIP8_SRCS)
+	iverilog -o $@ $(IVFLAGS) $^
+
+test-flip: $(TEST_FLIP_SRCS)
+	iverilog -o $@ $(IVFLAGS) $^
+
+reference-flip8.txt: gen-test-flip8
+	$^ > $@
+
+gen-test-flip8: gen_test_flip8.cpp
+	$(CXX) -o $@ -O2 -std=c++17 $^
+
+reference-flip.txt: gen-test-flip
+	$^ > $@
+
+gen-test-flip: gen_test_flip_v2.cpp
+	$(CXX) -o $@ -O2 -std=c++17 $^
+
+fpgaothello-sim: $(SRCS)
+	iverilog -o $@ -g2012 $(SRCS)
+
+.PHONY: old-test
+old-test:
 	vlib work
 	vlog -work work -sv processer_sim.sv
 	vlog -work work -sv pipeline.sv
