@@ -374,13 +374,21 @@ always @(posedge iCLOCK) begin
 end
 
 wire [7:0] waddr = {stack_id6, stack_index6};
+wire [63:0] wx = mode6 == M_PASS ? ~player6 : (x6 ^ posbit6);
+wire [63:0] wy = mode6 == M_PASS ? ~opponent6 : (y6 ^ posbit6);
+wire signed [7:0] wresult = mode6 == M_PASS ? -8'd64 : result6;
+wire signed [7:0] walpha = mode6 == M_PASS ? -beta6 : alpha6;
+wire signed [7:0] wbeta = mode6 == M_PASS ? -alpha6 : beta6;
+wire wpass = mode6 == M_PASS ? 1'b1 : (move6 ? 1'b0 : pass6);
+wire wprev_passed = mode6 == M_PASS ? 1'b1 : prev_passed6;
+wire we = mode6 == M_NORMAL | mode6 == M_PASS;
+wire [153:0] wdata = {wx, wy, wresult, walpha, wbeta, wpass, wprev_passed};
 
 always @(posedge iCLOCK) begin
   if (enable) begin
     case (mode6)
       M_NORMAL: begin
         if (move6) begin
-          stack[waddr] <= {x6 ^ posbit6, y6 ^ posbit6, result6, alpha6, beta6, 1'b0, prev_passed6};
           x0 <= ~next_op6;
           y0 <= ~next_me6;
           result0 <= -8'd64;
@@ -388,7 +396,6 @@ always @(posedge iCLOCK) begin
           beta0 <= -alpha6;
           stack_index0 <= stack_index6 + 1;
         end else begin
-          stack[waddr] <= {x6 ^ posbit6, y6 ^ posbit6, result6, alpha6, beta6, pass6, prev_passed6};
           stack_index0 <= stack_index6;
         end
         solved <= 1'b0;
@@ -441,7 +448,6 @@ always @(posedge iCLOCK) begin
       end
       M_PASS: begin
         is_commit <= 1'b0;
-        stack[waddr] <= {~player6, ~opponent6, -8'd64, -beta6, -alpha6, 1'b1, 1'b1};
         stack_index0 <= stack_index6;
         is_moved <= move6;
         solved <= 1'b0;
@@ -458,6 +464,9 @@ always @(posedge iCLOCK) begin
         mode0 <= M_NORMAL;
       end
     endcase
+    if (we) begin
+      stack[waddr] <= wdata;
+    end
     stack_id0 <= stack_id6;
   end else begin
     stack_index0 <= 0;
