@@ -56,30 +56,25 @@ wire [7:0] raddr = {stack_id0, stack_index0};
 wire [153:0] rdata;
 
 always @(posedge iCLOCK) begin
-  if (enable) begin
-    if (is_moved) begin
-      x1 <= x0;
-      y1 <= y0;
-      result1 <= result0;
-      alpha1 <= alpha0;
-      beta1 <= beta0;
-      pass1 <= 1'b1;
-      prev_passed1 <= 1'b0;
-    end else begin
-      {x1, y1, result1, alpha1, beta1, pass1, prev_passed1} <= rdata;
-    end
-    stack_index1 <= stack_index0;
-    stack_id1 <= stack_id0;
-    if (is_commit) begin
-      score1 <= score0;
-    end else begin
-      score1 <= -64;
-    end
-    mode1 <= mode0;
+  if (is_moved) begin
+    x1 <= x0;
+    y1 <= y0;
+    result1 <= result0;
+    alpha1 <= alpha0;
+    beta1 <= beta0;
+    pass1 <= 1'b1;
+    prev_passed1 <= 1'b0;
   end else begin
-    stack_index1 <= 0;
-    mode1 <= M_START;
+    {x1, y1, result1, alpha1, beta1, pass1, prev_passed1} <= rdata;
   end
+  if (is_commit) begin
+    score1 <= score0;
+  end else begin
+    score1 <= -64;
+  end
+  stack_index1 <= stack_index0;
+  stack_id1 <= stack_id0;
+  mode1 <= mode0;
   o <= stack_id0;
 end
 
@@ -100,25 +95,20 @@ logic [63:0] posbit2;
 logic [2:0] mode2;
 
 always @(posedge iCLOCK) begin
-  if (enable) begin
-    player2 <= x1 & ~y1;
-    opponent2 <= ~x1 & y1;
-    remain2 <= x1 & y1;
-    posbit2 <= (x1 & y1) & -(x1 & y1);
-    x2 <= x1;
-    y2 <= y1;
-    result2 <= max(result1, score1);
-    alpha2 <= max(alpha1, score1);
-    beta2 <= beta1;
-    pass2 <= pass1;
-    prev_passed2 <= prev_passed1;
-    stack_index2 <= stack_index1;
-    mode2 <= mode1;
-    stack_id2 <= stack_id1;
-  end else begin
-    stack_index2 <= 0;
-    mode2 <= M_START;
-  end
+  x2 <= x1;
+  y2 <= y1;
+  result2 <= max(result1, score1);
+  alpha2 <= max(alpha1, score1);
+  beta2 <= beta1;
+  pass2 <= pass1;
+  prev_passed2 <= prev_passed1;
+  stack_index2 <= stack_index1;
+  stack_id2 <= stack_id1;
+  player2 <= x1 & ~y1;
+  opponent2 <= ~x1 & y1;
+  remain2 <= x1 & y1;
+  posbit2 <= (x1 & y1) & -(x1 & y1);
+  mode2 <= mode1;
 end
 
 // DECODE2 to EXEC1
@@ -159,46 +149,41 @@ popcount popcnt3(
 );
 
 always @(posedge iCLOCK) begin
-  if (enable) begin
-    if (mode2 != M_START) begin
-      pcnt3 <= pcnt_w;
-      ocnt3 <= ocnt_w;
-      pos3 <= pos3_w[5:0];
-      if (|remain2 == 1'b0) begin
-        if (pass2) begin
-          if (prev_passed2) begin
-            mode3 <= M_SAVE;
-          end else begin
-            mode3 <= M_PASS;
-          end
+  if (mode2 != M_START) begin
+    if (|remain2 == 1'b0) begin
+      if (pass2) begin
+        if (prev_passed2) begin
+          mode3 <= M_SAVE;
         end else begin
-          mode3 <= M_COMMIT;
+          mode3 <= M_PASS;
         end
-      end else if (alpha2 >= beta2) begin
-        mode3 <= M_COMMIT;
       end else begin
-        mode3 <= M_NORMAL;
+        mode3 <= M_COMMIT;
       end
-      x3 <= x2;
-      y3 <= y2;
-      result3 <= result2;
-      alpha3 <= alpha2;
-      beta3 <= beta2;
-      pass3 <= pass2;
-      prev_passed3 <= prev_passed2;
-      stack_index3 <= stack_index2;
-      player3 <= player2;
-      opponent3 <= opponent2;
-      remain3 <= remain2;
-      posbit3 <= posbit2;
+    end else if (alpha2 >= beta2) begin
+      mode3 <= M_COMMIT;
     end else begin
-      mode3 <= mode2;
+      mode3 <= M_NORMAL;
     end
-    stack_id3 <= stack_id2;
   end else begin
-    stack_index3 <= 0;
-    mode3 <= M_START;
+    mode3 <= mode2;
   end
+  x3 <= x2;
+  y3 <= y2;
+  result3 <= result2;
+  alpha3 <= alpha2;
+  beta3 <= beta2;
+  pass3 <= pass2;
+  prev_passed3 <= prev_passed2;
+  stack_index3 <= stack_index2;
+  stack_id3 <= stack_id2;
+  player3 <= player2;
+  opponent3 <= opponent2;
+  remain3 <= remain2;
+  posbit3 <= posbit2;
+  pos3 <= pos3_w[5:0];
+  pcnt3 <= pcnt_w;
+  ocnt3 <= ocnt_w;
 end
 
 // EXEC1 to EXEC2
@@ -231,40 +216,29 @@ flip_v2 flip(
 );
 
 always @(posedge iCLOCK) begin
-  if (enable) begin
-    if (pcnt3 > ocnt3) begin
-      score4 <= 64 - (ocnt3 << 1);
-    end else if (pcnt3 < ocnt3) begin
-      score4 <= -64 + (pcnt3 << 1);
-    end else begin
-      score4 <= 0;
-    end
-    case (mode3)
-      M_COMMIT:;
-      M_SAVE:;
-      M_PASS:;
-      M_NORMAL:;
-    endcase
-    x4 <= x3;
-    y4 <= y3;
-    result4 <= result3;
-    alpha4 <= alpha3;
-    beta4 <= beta3;
-    pass4 <= pass3;
-    prev_passed4 <= prev_passed3;
-    stack_index4 <= stack_index3;
-    stack_id4 <= stack_id3;
-    player4 <= player3;
-    opponent4 <= opponent3;
-    remain4 <= remain3;
-    posbit4 <= posbit3;
-    pcnt4 <= pcnt3;
-    ocnt4 <= ocnt3;
-    mode4 <= mode3;
+  if (pcnt3 > ocnt3) begin
+    score4 <= 64 - (ocnt3 << 1);
+  end else if (pcnt3 < ocnt3) begin
+    score4 <= -64 + (pcnt3 << 1);
   end else begin
-    stack_index4 <= 0;
-    mode4 <= M_START;
+    score4 <= 0;
   end
+  x4 <= x3;
+  y4 <= y3;
+  result4 <= result3;
+  alpha4 <= alpha3;
+  beta4 <= beta3;
+  pass4 <= pass3;
+  prev_passed4 <= prev_passed3;
+  stack_index4 <= stack_index3;
+  stack_id4 <= stack_id3;
+  player4 <= player3;
+  opponent4 <= opponent3;
+  remain4 <= remain3;
+  posbit4 <= posbit3;
+  pcnt4 <= pcnt3;
+  ocnt4 <= ocnt3;
+  mode4 <= mode3;
 end
 
 // EXEC2 to WRITE1
@@ -287,28 +261,23 @@ logic [2:0] mode5;
 logic signed [7:0] score5;
 
 always @(posedge iCLOCK) begin
-  if (enable) begin
-    x5 <= x4;
-    y5 <= y4;
-    result5 <= result4;
-    alpha5 <= alpha4;
-    beta5 <= beta4;
-    pass5 <= pass4;
-    prev_passed5 <= prev_passed4;
-    stack_index5 <= stack_index4;
-    stack_id5 <= stack_id4;
-    player5 <= player4;
-    opponent5 <= opponent4;
-    remain5 <= remain4;
-    posbit5 <= posbit4;
-    pcnt5 <= pcnt4;
-    ocnt5 <= ocnt4;
-    mode5 <= mode4;
-    score5 <= score4;
-  end else begin
-    stack_index5 <= 0;
-    mode5 <= M_START;
-  end
+  x5 <= x4;
+  y5 <= y4;
+  result5 <= result4;
+  alpha5 <= alpha4;
+  beta5 <= beta4;
+  pass5 <= pass4;
+  prev_passed5 <= prev_passed4;
+  stack_index5 <= stack_index4;
+  stack_id5 <= stack_id4;
+  player5 <= player4;
+  opponent5 <= opponent4;
+  remain5 <= remain4;
+  posbit5 <= posbit4;
+  pcnt5 <= pcnt4;
+  ocnt5 <= ocnt4;
+  mode5 <= mode4;
+  score5 <= score4;
 end
 
 // WRITE1 to WRITE2
@@ -334,42 +303,37 @@ logic [63:0] next_op6;
 logic move6;
 
 always @(posedge iCLOCK) begin
-  if (enable) begin
-    case (mode5)
-      M_NORMAL: begin
-        if (|oflip) begin
-          next_me6 <= opponent5 ^ oflip;
-          next_op6 <= (player5 ^ oflip) | posbit5;
-          move6 <= 1'b1;
-        end else begin
-          move6 <= 1'b0;
-        end
-      end
-      default: begin
+  case (mode5)
+    M_NORMAL: begin
+      if (|oflip) begin
+        move6 <= 1'b1;
+      end else begin
         move6 <= 1'b0;
       end
-    endcase
-    x6 <= x5;
-    y6 <= y5;
-    result6 <= result5;
-    alpha6 <= alpha5;
-    beta6 <= beta5;
-    pass6 <= pass5;
-    prev_passed6 <= prev_passed5;
-    stack_index6 <= stack_index5;
-    stack_id6 <= stack_id5;
-    player6 <= player5;
-    opponent6 <= opponent5;
-    remain6 <= remain5;
-    posbit6 <= posbit5;
-    pcnt6 <= pcnt5;
-    ocnt6 <= ocnt5;
-    mode6 <= mode5;
-    score6 <= score5;
-  end else begin
-    stack_index6 <= 0;
-    mode6 <= M_START;
-  end
+    end
+    default: begin
+      move6 <= 1'b0;
+    end
+  endcase
+  x6 <= x5;
+  y6 <= y5;
+  result6 <= result5;
+  alpha6 <= alpha5;
+  beta6 <= beta5;
+  pass6 <= pass5;
+  prev_passed6 <= prev_passed5;
+  stack_index6 <= stack_index5;
+  stack_id6 <= stack_id5;
+  player6 <= player5;
+  opponent6 <= opponent5;
+  remain6 <= remain5;
+  posbit6 <= posbit5;
+  pcnt6 <= pcnt5;
+  ocnt6 <= ocnt5;
+  mode6 <= mode5;
+  score6 <= score5;
+  next_me6 <= opponent5 ^ oflip;
+  next_op6 <= (player5 ^ oflip) | posbit5;
 end
 
 wire [7:0] waddr = {stack_id6, stack_index6};
@@ -466,12 +430,12 @@ always @(posedge iCLOCK) begin
         solved <= 1'b0;
       end
     endcase
-    stack_id0 <= stack_id6;
   end else begin
     stack_index0 <= 0;
     mode0 <= M_START;
     solved <= 1'b0;
   end
+  stack_id0 <= stack_id6;
 end
 
 // Stack
