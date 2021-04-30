@@ -123,7 +123,6 @@ logic [3:0] stack_index3;
 logic [2:0] stack_id3 = 3;
 logic [63:0] player3;
 logic [63:0] opponent3;
-logic [63:0] remain3;
 logic [63:0] posbit3;
 logic [6:0] pos3_w;
 logic [5:0] pos3;
@@ -179,7 +178,6 @@ always @(posedge iCLOCK) begin
   stack_id3 <= stack_id2;
   player3 <= player2;
   opponent3 <= opponent2;
-  remain3 <= remain2;
   posbit3 <= posbit2;
   pos3 <= pos3_w[5:0];
   pcnt3 <= pcnt_w;
@@ -198,21 +196,20 @@ logic [3:0] stack_index4;
 logic [2:0] stack_id4 = 4;
 logic [63:0] player4;
 logic [63:0] opponent4;
-logic [63:0] remain4;
 logic [63:0] posbit4;
 logic [6:0] pcnt4;
 logic [6:0] ocnt4;
 logic [2:0] mode4;
 logic signed [7:0] score4;
 
-logic [63:0] oflip;
+logic [63:0] oflip5;
 
 flip_v2 flip(
   .clock(iCLOCK),
   .player(player3),
   .opponent(opponent3),
   .pos(pos3),
-  .flip(oflip)
+  .flip(oflip5)
 );
 
 always @(posedge iCLOCK) begin
@@ -234,7 +231,6 @@ always @(posedge iCLOCK) begin
   stack_id4 <= stack_id3;
   player4 <= player3;
   opponent4 <= opponent3;
-  remain4 <= remain3;
   posbit4 <= posbit3;
   pcnt4 <= pcnt3;
   ocnt4 <= ocnt3;
@@ -253,7 +249,6 @@ logic [3:0] stack_index5;
 logic [2:0] stack_id5 = 5;
 logic [63:0] player5;
 logic [63:0] opponent5;
-logic [63:0] remain5;
 logic [63:0] posbit5;
 logic [6:0] pcnt5;
 logic [6:0] ocnt5;
@@ -272,7 +267,6 @@ always @(posedge iCLOCK) begin
   stack_id5 <= stack_id4;
   player5 <= player4;
   opponent5 <= opponent4;
-  remain5 <= remain4;
   posbit5 <= posbit4;
   pcnt5 <= pcnt4;
   ocnt5 <= ocnt4;
@@ -292,20 +286,20 @@ logic [3:0] stack_index6;
 logic [2:0] stack_id6 = 6;
 logic [63:0] player6;
 logic [63:0] opponent6;
-logic [63:0] remain6;
 logic [63:0] posbit6;
 logic [6:0] pcnt6;
 logic [6:0] ocnt6;
 logic [2:0] mode6;
 logic signed [7:0] score6;
-logic [63:0] next_me6;
-logic [63:0] next_op6;
+logic [63:0] oflip6;
+//logic [63:0] next_me6;
+//logic [63:0] next_op6;
 logic move6;
 
 always @(posedge iCLOCK) begin
   case (mode5)
     M_NORMAL: begin
-      if (|oflip) begin
+      if (|oflip5) begin
         move6 <= 1'b1;
       end else begin
         move6 <= 1'b0;
@@ -326,14 +320,14 @@ always @(posedge iCLOCK) begin
   stack_id6 <= stack_id5;
   player6 <= player5;
   opponent6 <= opponent5;
-  remain6 <= remain5;
   posbit6 <= posbit5;
   pcnt6 <= pcnt5;
   ocnt6 <= ocnt5;
   mode6 <= mode5;
   score6 <= score5;
-  next_me6 <= opponent5 ^ oflip;
-  next_op6 <= (player5 ^ oflip) | posbit5;
+  oflip6 <= oflip5;
+  //next_me6 <= opponent5 ^ oflip5;
+  //next_op6 <= (player5 ^ oflip5) | posbit5;
 end
 
 wire [6:0] waddr = {stack_id6, stack_index6};
@@ -352,11 +346,6 @@ always @(posedge iCLOCK) begin
     case (mode6)
       M_NORMAL: begin
         if (move6) begin
-          x0 <= ~next_op6;
-          y0 <= ~next_me6;
-          result0 <= -8'd64;
-          alpha0 <= -beta6;
-          beta0 <= -alpha6;
           stack_index0 <= stack_index6 + 1;
         end else begin
           stack_index0 <= stack_index6;
@@ -375,18 +364,10 @@ always @(posedge iCLOCK) begin
         end else begin
           is_commit <= 1'b0;
           stack_index0 <= 0;
-          solved <= 1'b1;
-          oPlayer <= player6;
-          oOpponent <= opponent6;
-          res <= -score6;
-          stack_index0 <= 0;
           is_moved <= 1'b1;
-          x0 <= ~iOpponent;
-          y0 <= ~iPlayer;
-          result0 <= -8'd64;
-          alpha0 <= -8'd64;
-          beta0 <= 8'd64;
+          solved <= 1'b1;
         end
+        res <= -score6;
       end
       M_COMMIT: begin
         score0 <= prev_passed6 ? result6 : -result6;
@@ -400,41 +381,43 @@ always @(posedge iCLOCK) begin
           stack_index0 <= 0;
           is_moved <= 1'b1;
           solved <= 1'b1;
-          oPlayer <= player6;
-          oOpponent <= opponent6;
-          res <= prev_passed6 ? -result6 : result6;
-          stack_index0 <= 0;
-          x0 <= ~iOpponent;
-          y0 <= ~iPlayer;
-          result0 <= -8'd64;
-          alpha0 <= -8'd64;
-          beta0 <= 8'd64;
         end
+        res <= prev_passed6 ? -result6 : result6;
       end
       M_PASS: begin
         is_commit <= 1'b0;
         stack_index0 <= stack_index6;
-        is_moved <= move6;
+        is_moved <= 1'b0;
         solved <= 1'b0;
       end
       M_START: begin
         is_commit <= 1'b0;
         stack_index0 <= 0;
         is_moved <= 1'b1;
-        x0 <= ~iOpponent;
-        y0 <= ~iPlayer;
-        result0 <= -8'd64;
-        alpha0 <= -8'd64;
-        beta0 <= 8'd64;
-        mode0 <= M_NORMAL;
         solved <= 1'b0;
       end
     endcase
+    mode0 <= M_NORMAL;
   end else begin
     stack_index0 <= 0;
     mode0 <= M_START;
     solved <= 1'b0;
   end
+  if (move6) begin
+    x0 <= ~((player6 ^ oflip6) | posbit6);
+    y0 <= ~(opponent6 ^ oflip6);
+    result0 <= -8'd64;
+    alpha0 <= -beta6;
+    beta0 <= -alpha6;
+  end else begin
+    x0 <= ~iOpponent;
+    y0 <= ~iPlayer;
+    result0 <= -8'd64;
+    alpha0 <= -8'd64;
+    beta0 <= 8'd64;
+  end
+  oPlayer <= player6;
+  oOpponent <= opponent6;
   stack_id0 <= stack_id6;
 end
 
