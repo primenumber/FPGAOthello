@@ -29,7 +29,6 @@ endfunction
 // PREV-WRITE2 to FETCH
 logic [63:0] x0;
 logic [63:0] y0;
-logic signed [7:0] result0;
 logic signed [7:0] alpha0;
 logic signed [7:0] beta0;
 logic [3:0] stack_index0;
@@ -52,14 +51,14 @@ logic [2:0] stack_id1 = 1;
 logic signed [7:0] score1;
 logic [2:0] mode1;
 
-wire [6:0] raddr = {stack_id0, stack_index0};
+wire [6:0] raddr = {stack_index0, stack_id0};
 wire [153:0] rdata;
 
 always @(posedge iCLOCK) begin
   if (is_moved) begin
     x1 <= x0;
     y1 <= y0;
-    result1 <= result0;
+    result1 <= -8'd64;
     alpha1 <= alpha0;
     beta1 <= beta0;
     pass1 <= 1'b1;
@@ -292,8 +291,6 @@ logic [6:0] ocnt6;
 logic [2:0] mode6;
 logic signed [7:0] score6;
 logic [63:0] oflip6;
-//logic [63:0] next_me6;
-//logic [63:0] next_op6;
 logic move6;
 
 always @(posedge iCLOCK) begin
@@ -326,11 +323,9 @@ always @(posedge iCLOCK) begin
   mode6 <= mode5;
   score6 <= score5;
   oflip6 <= oflip5;
-  //next_me6 <= opponent5 ^ oflip5;
-  //next_op6 <= (player5 ^ oflip5) | posbit5;
 end
 
-wire [6:0] waddr = {stack_id6, stack_index6};
+wire [6:0] waddr = {stack_index6, stack_id6};
 wire [63:0] wx = mode6 == M_PASS ? ~player6 : (x6 ^ posbit6);
 wire [63:0] wy = mode6 == M_PASS ? ~opponent6 : (y6 ^ posbit6);
 wire signed [7:0] wresult = mode6 == M_PASS ? -8'd64 : result6;
@@ -406,13 +401,11 @@ always @(posedge iCLOCK) begin
   if (move6) begin
     x0 <= ~((player6 ^ oflip6) | posbit6);
     y0 <= ~(opponent6 ^ oflip6);
-    result0 <= -8'd64;
     alpha0 <= -beta6;
     beta0 <= -alpha6;
   end else begin
     x0 <= ~iOpponent;
     y0 <= ~iPlayer;
-    result0 <= -8'd64;
     alpha0 <= -8'd64;
     beta0 <= 8'd64;
   end

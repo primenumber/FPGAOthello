@@ -7,7 +7,7 @@ module bram(
   input wire [153:0] wd
 );
 
-(* RAM_STYLE="BLOCK" *) reg [153:0] bram[0:127];
+reg [153:0] bram[0:63];
 
 assign rd = bram[ra];
 
