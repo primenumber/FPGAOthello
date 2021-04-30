@@ -10,7 +10,7 @@ module pipeline(
   output reg [4:0] o
 );
 
-localparam MEMSIZE = 256;
+localparam MEMSIZE = 128;
 
 localparam M_NORMAL = 3'h0,
            M_COMMIT = 3'h1,
@@ -33,7 +33,7 @@ logic signed [7:0] result0;
 logic signed [7:0] alpha0;
 logic signed [7:0] beta0;
 logic [3:0] stack_index0;
-logic [3:0] stack_id0 = 0;
+logic [2:0] stack_id0 = 0;
 logic is_moved;
 logic is_commit;
 logic signed [7:0] score0;
@@ -48,11 +48,11 @@ logic signed [7:0] beta1;
 logic pass1;
 logic prev_passed1;
 logic [3:0] stack_index1;
-logic [3:0] stack_id1 = 1;
+logic [2:0] stack_id1 = 1;
 logic signed [7:0] score1;
 logic [2:0] mode1;
 
-wire [7:0] raddr = {stack_id0, stack_index0};
+wire [6:0] raddr = {stack_id0, stack_index0};
 wire [153:0] rdata;
 
 always @(posedge iCLOCK) begin
@@ -87,7 +87,7 @@ logic signed [7:0] beta2;
 logic pass2;
 logic prev_passed2;
 logic [3:0] stack_index2;
-logic [3:0] stack_id2 = 2;
+logic [2:0] stack_id2 = 2;
 logic [63:0] player2;
 logic [63:0] opponent2;
 logic [63:0] remain2;
@@ -120,7 +120,7 @@ logic signed [7:0] beta3;
 logic pass3;
 logic prev_passed3;
 logic [3:0] stack_index3;
-logic [3:0] stack_id3 = 3;
+logic [2:0] stack_id3 = 3;
 logic [63:0] player3;
 logic [63:0] opponent3;
 logic [63:0] remain3;
@@ -195,7 +195,7 @@ logic signed [7:0] beta4;
 logic pass4;
 logic prev_passed4;
 logic [3:0] stack_index4;
-logic [3:0] stack_id4 = 4;
+logic [2:0] stack_id4 = 4;
 logic [63:0] player4;
 logic [63:0] opponent4;
 logic [63:0] remain4;
@@ -250,7 +250,7 @@ logic signed [7:0] beta5;
 logic pass5;
 logic prev_passed5;
 logic [3:0] stack_index5;
-logic [3:0] stack_id5 = 5;
+logic [2:0] stack_id5 = 5;
 logic [63:0] player5;
 logic [63:0] opponent5;
 logic [63:0] remain5;
@@ -289,7 +289,7 @@ logic signed [7:0] beta6;
 logic pass6;
 logic prev_passed6;
 logic [3:0] stack_index6;
-logic [3:0] stack_id6 = 6;
+logic [2:0] stack_id6 = 6;
 logic [63:0] player6;
 logic [63:0] opponent6;
 logic [63:0] remain6;
@@ -336,7 +336,7 @@ always @(posedge iCLOCK) begin
   next_op6 <= (player5 ^ oflip) | posbit5;
 end
 
-wire [7:0] waddr = {stack_id6, stack_index6};
+wire [6:0] waddr = {stack_id6, stack_index6};
 wire [63:0] wx = mode6 == M_PASS ? ~player6 : (x6 ^ posbit6);
 wire [63:0] wy = mode6 == M_PASS ? ~opponent6 : (y6 ^ posbit6);
 wire signed [7:0] wresult = mode6 == M_PASS ? -8'd64 : result6;
