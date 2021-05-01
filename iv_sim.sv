@@ -5,6 +5,7 @@ localparam PL_CYCLE = 20;
 
 reg iCLOCK;
 reg enable;
+reg valid;
 reg [63:0] iPlayer;
 reg [63:0] iOpponent;
 reg [63:0] iPlayer0;
@@ -17,10 +18,11 @@ logic solved;
 logic [63:0] oPlayer;
 logic [63:0] oOpponent;
 logic signed [7:0] res;
-logic [4:0] o;
+logic [2:0] o;
 
 pipeline pipeline(
   .iCLOCK(iCLOCK),
+  .valid(valid),
   .enable(enable),
   .iPlayer(iPlayer),
   .iOpponent(iOpponent),
@@ -63,6 +65,7 @@ task tsk_check;
     $display("B1: %h %h", iPlayer1, iOpponent1);
     
     enable <= 1'b1;
+    valid <= 1'b1;
     #PL_CYCLE;
     $display("B: %h %h", iPlayer, iOpponent);
     

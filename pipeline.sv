@@ -1,13 +1,14 @@
 module pipeline(
   input wire iCLOCK,
   input wire enable,
+  input wire valid,
   input wire [63:0] iPlayer,
   input wire [63:0] iOpponent,
   output reg solved,
   output reg [63:0] oPlayer,
   output reg [63:0] oOpponent,
   output reg signed [7:0] res,
-  output reg [4:0] o
+  output reg [2:0] o
 );
 
 localparam MEMSIZE = 128;
@@ -26,19 +27,44 @@ function signed [7:0] max;
   end
 endfunction
 
-// PREV-WRITE2 to FETCH
+// PREV-WRITE2 to FETCH1
+logic [63:0] x7;
+logic [63:0] y7;
+logic signed [7:0] alpha7;
+logic signed [7:0] beta7;
+logic [3:0] stack_index7;
+logic [2:0] stack_id7 = 7;
+logic is_moved7;
+logic is_commit7;
+logic signed [7:0] score7;
+logic [2:0] mode7;
+
+// FETCH1 to FETCH2
 logic [63:0] x0;
 logic [63:0] y0;
 logic signed [7:0] alpha0;
 logic signed [7:0] beta0;
 logic [3:0] stack_index0;
 logic [2:0] stack_id0 = 0;
-logic is_moved;
-logic is_commit;
+logic is_moved0;
+logic is_commit0;
 logic signed [7:0] score0;
 logic [2:0] mode0;
 
-// FETCH to DECODE1
+always @(posedge iCLOCK) begin
+  x0 <= x7;
+  y0 <= y7;
+  alpha0 <= alpha7;
+  beta0 <= beta7;
+  stack_index0 <= stack_index7;
+  stack_id0 <= stack_id7;
+  is_moved0 <= is_moved7;
+  is_commit0 <= is_commit7;
+  score0 <= score7;
+  mode0 <= mode7;
+end
+
+// FETCH2 to DECODE1
 logic [63:0] x1;
 logic [63:0] y1;
 logic signed [7:0] result1;
@@ -51,11 +77,11 @@ logic [2:0] stack_id1 = 1;
 logic signed [7:0] score1;
 logic [2:0] mode1;
 
-wire [6:0] raddr = {stack_index0, stack_id0};
-wire [153:0] rdata;
+wire [5:0] raddr = {stack_index7, stack_id7};
+logic [153:0] rdata;
 
 always @(posedge iCLOCK) begin
-  if (is_moved) begin
+  if (is_moved0) begin
     x1 <= x0;
     y1 <= y0;
     result1 <= -8'd64;
@@ -66,7 +92,7 @@ always @(posedge iCLOCK) begin
   end else begin
     {x1, y1, result1, alpha1, beta1, pass1, prev_passed1} <= rdata;
   end
-  if (is_commit) begin
+  if (is_commit0) begin
     score1 <= score0;
   end else begin
     score1 <= -64;
@@ -196,8 +222,6 @@ logic [2:0] stack_id4 = 4;
 logic [63:0] player4;
 logic [63:0] opponent4;
 logic [63:0] posbit4;
-logic [6:0] pcnt4;
-logic [6:0] ocnt4;
 logic [2:0] mode4;
 logic signed [7:0] score4;
 
@@ -231,8 +255,6 @@ always @(posedge iCLOCK) begin
   player4 <= player3;
   opponent4 <= opponent3;
   posbit4 <= posbit3;
-  pcnt4 <= pcnt3;
-  ocnt4 <= ocnt3;
   mode4 <= mode3;
 end
 
@@ -249,8 +271,6 @@ logic [2:0] stack_id5 = 5;
 logic [63:0] player5;
 logic [63:0] opponent5;
 logic [63:0] posbit5;
-logic [6:0] pcnt5;
-logic [6:0] ocnt5;
 logic [2:0] mode5;
 logic signed [7:0] score5;
 
@@ -267,8 +287,6 @@ always @(posedge iCLOCK) begin
   player5 <= player4;
   opponent5 <= opponent4;
   posbit5 <= posbit4;
-  pcnt5 <= pcnt4;
-  ocnt5 <= ocnt4;
   mode5 <= mode4;
   score5 <= score4;
 end
@@ -286,8 +304,6 @@ logic [2:0] stack_id6 = 6;
 logic [63:0] player6;
 logic [63:0] opponent6;
 logic [63:0] posbit6;
-logic [6:0] pcnt6;
-logic [6:0] ocnt6;
 logic [2:0] mode6;
 logic signed [7:0] score6;
 logic [63:0] oflip6;
@@ -318,14 +334,11 @@ always @(posedge iCLOCK) begin
   player6 <= player5;
   opponent6 <= opponent5;
   posbit6 <= posbit5;
-  pcnt6 <= pcnt5;
-  ocnt6 <= ocnt5;
   mode6 <= mode5;
   score6 <= score5;
   oflip6 <= oflip5;
 end
 
-wire [6:0] waddr = {stack_index6, stack_id6};
 wire [63:0] wx = mode6 == M_PASS ? ~player6 : (x6 ^ posbit6);
 wire [63:0] wy = mode6 == M_PASS ? ~opponent6 : (y6 ^ posbit6);
 wire signed [7:0] wresult = mode6 == M_PASS ? -8'd64 : result6;
@@ -333,85 +346,95 @@ wire signed [7:0] walpha = mode6 == M_PASS ? -beta6 : alpha6;
 wire signed [7:0] wbeta = mode6 == M_PASS ? -alpha6 : beta6;
 wire wpass = mode6 == M_PASS ? 1'b1 : (move6 ? 1'b0 : pass6);
 wire wprev_passed = mode6 == M_PASS ? 1'b1 : prev_passed6;
-wire we = mode6 == M_NORMAL | mode6 == M_PASS;
-wire [153:0] wdata = {wx, wy, wresult, walpha, wbeta, wpass, wprev_passed};
+reg [5:0] waddr;
+reg we;
+reg [153:0] wdata;
 
 always @(posedge iCLOCK) begin
+  waddr <= {stack_index6, stack_id6};
+  we <= mode6 == M_NORMAL | mode6 == M_PASS;
+  wdata <= {wx, wy, wresult, walpha, wbeta, wpass, wprev_passed};
   if (enable) begin
     case (mode6)
       M_NORMAL: begin
         if (move6) begin
-          stack_index0 <= stack_index6 + 1;
+          stack_index7 <= stack_index6 + 1;
         end else begin
-          stack_index0 <= stack_index6;
+          stack_index7 <= stack_index6;
         end
         solved <= 1'b0;
-        is_commit <= 1'b0;
-        is_moved <= move6;
+        is_commit7 <= 1'b0;
+        is_moved7 <= move6;
       end
       M_SAVE: begin
-        score0 <= score6;
+        score7 <= score6;
         if (stack_index6) begin
-          is_commit <= 1'b1;
-          stack_index0 <= stack_index6 - 1;
-          is_moved <= 1'b0;
+          is_commit7 <= 1'b1;
+          stack_index7 <= stack_index6 - 1;
+          is_moved7 <= 1'b0;
           solved <= 1'b0;
         end else begin
-          is_commit <= 1'b0;
-          stack_index0 <= 0;
-          is_moved <= 1'b1;
+          is_commit7 <= 1'b0;
+          stack_index7 <= 0;
+          is_moved7 <= 1'b1;
           solved <= 1'b1;
         end
         res <= -score6;
       end
       M_COMMIT: begin
-        score0 <= prev_passed6 ? result6 : -result6;
+        score7 <= prev_passed6 ? result6 : -result6;
         if (stack_index6) begin
-          is_commit <= 1'b1;
-          stack_index0 <= stack_index6 - 1;
-          is_moved <= 1'b0;
+          is_commit7 <= 1'b1;
+          stack_index7 <= stack_index6 - 1;
+          is_moved7 <= 1'b0;
           solved <= 1'b0;
         end else begin
-          is_commit <= 1'b0;
-          stack_index0 <= 0;
-          is_moved <= 1'b1;
+          is_commit7 <= 1'b0;
+          stack_index7 <= 0;
+          is_moved7 <= 1'b1;
           solved <= 1'b1;
         end
         res <= prev_passed6 ? -result6 : result6;
       end
       M_PASS: begin
-        is_commit <= 1'b0;
-        stack_index0 <= stack_index6;
-        is_moved <= 1'b0;
+        is_commit7 <= 1'b0;
+        stack_index7 <= stack_index6;
+        is_moved7 <= 1'b0;
         solved <= 1'b0;
       end
       M_START: begin
-        is_commit <= 1'b0;
-        stack_index0 <= 0;
-        is_moved <= 1'b1;
+        is_commit7 <= 1'b0;
+        stack_index7 <= 0;
+        is_moved7 <= 1'b1;
+        solved <= 1'b0;
+      end
+      default: begin
+        is_commit7 <= 1'b0;
+        stack_index7 <= stack_index6;
+        is_moved7 <= 1'b0;
         solved <= 1'b0;
       end
     endcase
-    mode0 <= M_NORMAL;
+    mode7 <= M_NORMAL;
   end else begin
-    stack_index0 <= 0;
-    mode0 <= M_START;
+    stack_index7 <= 0;
+    mode7 <= M_START;
     solved <= 1'b0;
   end
   if (move6) begin
-    x0 <= ~((player6 ^ oflip6) | posbit6);
-    y0 <= ~(opponent6 ^ oflip6);
-    alpha0 <= -beta6;
-    beta0 <= -alpha6;
+    x7 <= ~((player6 ^ oflip6) | posbit6);
+    y7 <= ~(opponent6 ^ oflip6);
+    alpha7 <= -beta6;
+    beta7 <= -alpha6;
   end else begin
-    x0 <= ~iOpponent;
-    y0 <= ~iPlayer;
-    alpha0 <= -8'd64;
-    beta0 <= 8'd64;
+    x7 <= valid ? ~iOpponent : 64'h0;
+    y7 <= valid ? ~iPlayer : 64'h0;
+    alpha7 <= -8'd64;
+    beta7 <= 8'd64;
   end
   oPlayer <= player6;
   oOpponent <= opponent6;
-  stack_id0 <= stack_id6;
+  stack_id7 <= stack_id6;
 end
 
 // Stack
