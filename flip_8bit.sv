@@ -17,14 +17,12 @@ logic [7:0] flip_upper;
 logic [7:0] flip_lower;
 
 flip8_upper f8_upper(
-  .clock(clock),
   .player(player),
   .opponent(opponent),
   .pos(pos),
   .flip(flip_upper));
 
 flip8_upper f8_lower(
-  .clock(clock),
   .player(rev8(player)),
   .opponent(rev8(opponent)),
   .pos(3'h7 - pos),

@@ -28,36 +28,32 @@ wire [63:0] opponent_s = opponent >> {row, 3'b0};
 wire [7:0] player_h = player_s[7:0];
 wire [7:0] opponent_h = opponent_s[7:0];
 
-wire [2:0] shift_a1h8 = col >= row ? col - row : row - col;
+wire [3:0] shift_a1h8 = col + 8 - row;
 wire [7:0] player_a1h8;
 wire [7:0] opponent_a1h8;
 
 extract_a1h8 ext_p_a1h8(
   .x(player),
   .shift(shift_a1h8),
-  .shift_dir(col >= row),
   .y(player_a1h8));
 
 extract_a1h8 ext_o_a1h8(
   .x(opponent),
   .shift(shift_a1h8),
-  .shift_dir(col >= row),
   .y(opponent_a1h8));
 
-wire [2:0] shift_a8h1 = icol >= row ? icol - row : row - icol;
+wire [3:0] shift_a8h1 = row + col + 1;
 wire [7:0] player_a8h1;
 wire [7:0] opponent_a8h1;
 
 extract_a8h1 ext_p_a8h1(
   .x(player),
   .shift(shift_a8h1),
-  .shift_dir(row >= icol),
   .y(player_a8h1));
 
 extract_a8h1 ext_o_a8h1(
   .x(opponent),
   .shift(shift_a8h1),
-  .shift_dir(row >= icol),
   .y(opponent_a8h1));
 
 logic [7:0] flip_v;
@@ -142,23 +138,36 @@ begin
 end
 endfunction
 
-reg [2:0] shift_a1h8_reg;
-reg [2:0] shift_a8h1_reg;
-reg [2:0] col_reg;
-reg [2:0] row_reg;
-wire [2:0] icol_reg = ~col_reg;
+reg [3:0] rev_shift_a1h8;
+reg [3:0] rev_shift_a8h1;
+reg [5:0] pos_reg;
 
 always@(posedge clock) begin
-  shift_a1h8_reg <= shift_a1h8;
-  shift_a8h1_reg <= shift_a8h1;
-  col_reg <= col;
-  row_reg <= row;
+  rev_shift_a1h8 <= 16 - shift_a1h8;
+  rev_shift_a8h1 <= 16 - shift_a8h1;
+  pos_reg <= pos;
 end
-wire [63:0] a1h8 = col_reg >= row_reg ? scatter_a1h8(flip_a1h8) << shift_a1h8_reg : scatter_a1h8(flip_a1h8) >> shift_a1h8_reg;
-wire [63:0] a8h1 = icol_reg >= row_reg ? scatter_a8h1(flip_a8h1) >> shift_a8h1_reg : scatter_a8h1(flip_a8h1) << shift_a8h1_reg;
+wire [63:0] a1h8;
+wire [63:0] a8h1;
+wire [63:0] v;
+
+shift64 rshift_a1h8(
+  .x(scatter_a1h8(flip_a1h8)),
+  .shift(rev_shift_a1h8),
+  .y(a1h8));
+
+shift64 rshift_a8h1(
+  .x(scatter_a8h1(flip_a8h1)),
+  .shift(rev_shift_a8h1),
+  .y(a8h1));
+
+shift64 rshift_v(
+  .x(scatter_v(flip_v)),
+  .shift(4'h8 - pos_reg[2:0]),
+  .y(v));
 
 always@(posedge clock) begin
-  flip <= flip_h << {row_reg, 3'h0} | scatter_v(flip_v) << col_reg | a1h8 | a8h1;
+  flip <= flip_h << {pos_reg[5:3], 3'h0} | v | a1h8 | a8h1;
 end
 
 endmodule

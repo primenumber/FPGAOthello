@@ -1,5 +1,4 @@
 module flip8_upper(
-  input wire clock,
   input wire [7:0] player,
   input wire [7:0] opponent,
   input wire [2:0] pos,
