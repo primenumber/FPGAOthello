@@ -219,8 +219,6 @@ logic pass4;
 logic prev_passed4;
 logic [3:0] stack_index4;
 logic [2:0] stack_id4 = 4;
-logic [63:0] player4;
-logic [63:0] opponent4;
 logic [63:0] posbit4;
 logic [2:0] mode4;
 logic signed [7:0] score4;
@@ -252,8 +250,6 @@ always @(posedge iCLOCK) begin
   prev_passed4 <= prev_passed3;
   stack_index4 <= stack_index3;
   stack_id4 <= stack_id3;
-  player4 <= player3;
-  opponent4 <= opponent3;
   posbit4 <= posbit3;
   mode4 <= mode3;
 end
@@ -268,8 +264,6 @@ logic pass5;
 logic prev_passed5;
 logic [3:0] stack_index5;
 logic [2:0] stack_id5 = 5;
-logic [63:0] player5;
-logic [63:0] opponent5;
 logic [63:0] posbit5;
 logic [2:0] mode5;
 logic signed [7:0] score5;
@@ -284,8 +278,6 @@ always @(posedge iCLOCK) begin
   prev_passed5 <= prev_passed4;
   stack_index5 <= stack_index4;
   stack_id5 <= stack_id4;
-  player5 <= player4;
-  opponent5 <= opponent4;
   posbit5 <= posbit4;
   mode5 <= mode4;
   score5 <= score4;
@@ -331,8 +323,8 @@ always @(posedge iCLOCK) begin
   prev_passed6 <= prev_passed5;
   stack_index6 <= stack_index5;
   stack_id6 <= stack_id5;
-  player6 <= player5;
-  opponent6 <= opponent5;
+  player6 <= x5 & ~y5;
+  opponent6 <= ~x5 & y5;
   posbit6 <= posbit5;
   mode6 <= mode5;
   score6 <= score5;
@@ -357,6 +349,7 @@ always @(posedge iCLOCK) begin
   if (enable) begin
     case (mode6)
       M_NORMAL: begin
+        score7 <= score6;
         if (move6) begin
           stack_index7 <= stack_index6 + 1;
         end else begin
@@ -365,6 +358,7 @@ always @(posedge iCLOCK) begin
         solved <= 1'b0;
         is_commit7 <= 1'b0;
         is_moved7 <= move6;
+        res <= 8'h0;
       end
       M_SAVE: begin
         score7 <= score6;
@@ -397,29 +391,39 @@ always @(posedge iCLOCK) begin
         res <= prev_passed6 ? -result6 : result6;
       end
       M_PASS: begin
+        score7 <= score6;
         is_commit7 <= 1'b0;
         stack_index7 <= stack_index6;
         is_moved7 <= 1'b0;
         solved <= 1'b0;
+        res <= 8'h0;
       end
       M_START: begin
+        score7 <= score6;
         is_commit7 <= 1'b0;
         stack_index7 <= 0;
         is_moved7 <= 1'b1;
         solved <= 1'b0;
+        res <= 8'h0;
       end
       default: begin
+        score7 <= score6;
         is_commit7 <= 1'b0;
         stack_index7 <= stack_index6;
         is_moved7 <= 1'b0;
         solved <= 1'b0;
+        res <= 8'h0;
       end
     endcase
     mode7 <= M_NORMAL;
   end else begin
+    is_commit7 <= 1'b0;
     stack_index7 <= 0;
+    is_moved7 <= 1'b0;
     mode7 <= M_START;
     solved <= 1'b0;
+    score7 <= score6;
+    res <= 8'h0;
   end
   if (move6) begin
     x7 <= ~((player6 ^ oflip6) | posbit6);
