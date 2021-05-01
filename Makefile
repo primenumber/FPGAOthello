@@ -12,13 +12,13 @@ test-flip: $(TEST_FLIP_SRCS)
 	iverilog -o $@ $(IVFLAGS) $^
 
 reference-flip8.txt: gen-test-flip8
-	$^ > $@
+	./$^ > $@
 
 gen-test-flip8: gen_test_flip8.cpp
 	$(CXX) -o $@ -O2 -std=c++17 $^
 
 reference-flip.txt: gen-test-flip
-	$^ > $@
+	./$^ > $@
 
 gen-test-flip: gen_test_flip_v2.cpp
 	$(CXX) -o $@ -O2 -std=c++17 $^
