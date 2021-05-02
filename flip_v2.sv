@@ -23,8 +23,25 @@ extract_v ext_o_v(
   .shift(col),
   .y(opponent_v));
 
-wire [63:0] player_s = player >> {row, 3'b0};
-wire [63:0] opponent_s = opponent >> {row, 3'b0};
+function  [7:0] extract_h;
+  input [63:0] x;
+  input [2:0] row;
+begin
+  case (row)
+  3'h0: extract_h = x[7:0];
+  3'h1: extract_h = x[15:8];
+  3'h2: extract_h = x[23:16];
+  3'h3: extract_h = x[31:24];
+  3'h4: extract_h = x[39:32];
+  3'h5: extract_h = x[47:40];
+  3'h6: extract_h = x[55:48];
+  3'h7: extract_h = x[63:56];
+  endcase
+end
+endfunction
+
+wire [63:0] player_s = extract_h(player, row);
+wire [63:0] opponent_s = extract_h(opponent, row);
 wire [7:0] player_h = player_s[7:0];
 wire [7:0] opponent_h = opponent_s[7:0];
 
