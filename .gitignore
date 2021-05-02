@@ -1,2 +1,9 @@
 *.vcd
+*.o
+test-flip
+test-flip8
+test-pipeline
+gen-test-flip
+gen-test-flip8
+gen-test-pipeline
 reference-*.txt
