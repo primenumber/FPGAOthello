@@ -17,7 +17,7 @@ end
 
 always@(posedge clock) begin
   if (we && wa == ra) begin
-    rd = wd;
+    rd <= wd;
   end else begin
     rd <= bram[ra];
   end
