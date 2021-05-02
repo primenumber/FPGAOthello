@@ -1,6 +1,7 @@
 module popcount(
+  input clock,
   input wire [63:0] x,
-  output wire [6:0] o
+  output reg [6:0] o
 );
 
 wire [4:0] tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
@@ -38,7 +39,9 @@ popcount_8bit popc7(
   .o(tmp7)
 );
 
-assign o = ((tmp0 + tmp1) + (tmp2 + tmp3)) + ((tmp4 + tmp5) + (tmp6 + tmp7));
+always@(posedge clock) begin
+  o <= ((tmp0 + tmp1) + (tmp2 + tmp3)) + ((tmp4 + tmp5) + (tmp6 + tmp7));
+end
 
 //wire [15:0] x1, y1, z1, w1;
 //wire [15:0] x2, y2, z2, w2;

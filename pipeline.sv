@@ -120,6 +120,7 @@ logic [63:0] player2;
 logic [63:0] opponent2;
 logic [63:0] remain2;
 logic [63:0] under_pos2;
+logic [63:0] posbit2;
 logic [2:0] mode2;
 
 always @(posedge iCLOCK) begin
@@ -136,6 +137,7 @@ always @(posedge iCLOCK) begin
   opponent2 <= ~x1 & y1;
   remain2 <= x1 & y1;
   under_pos2 <= ((x1 & y1) - 1) & ~(x1 & y1);
+  posbit2 <= (x1 & y1) & -(x1 & y1);
   mode2 <= mode1;
 end
 
@@ -151,27 +153,27 @@ logic [3:0] stack_index3;
 logic [2:0] stack_id3 = 3;
 logic [63:0] player3;
 logic [63:0] opponent3;
-logic [6:0] pos3_w;
 logic [5:0] pos3;
-logic [6:0] pcnt_w;
-logic [6:0] ocnt_w;
 logic [6:0] pcnt3;
 logic [6:0] ocnt3;
 logic [2:0] mode3;
 
 popcount popcnt1(
+  .clock(iCLOCK),
   .x(player2),
-  .o(pcnt_w)
+  .o(pcnt3)
 );
 
 popcount popcnt2(
+  .clock(iCLOCK),
   .x(opponent2),
-  .o(ocnt_w)
+  .o(ocnt3)
 );
 
-popcount popcnt3(
-  .x(under_pos2),
-  .o(pos3_w)
+next_bit_pos nbpos(
+  .clock(iCLOCK),
+  .xb(posbit2),
+  .y(pos3)
 );
 
 always @(posedge iCLOCK) begin
@@ -205,9 +207,6 @@ always @(posedge iCLOCK) begin
   stack_id3 <= stack_id2;
   player3 <= player2;
   opponent3 <= opponent2;
-  pos3 <= pos3_w[5:0];
-  pcnt3 <= pcnt_w;
-  ocnt3 <= ocnt_w;
 end
 
 // EXEC1 to EXEC2

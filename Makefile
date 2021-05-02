@@ -2,7 +2,7 @@ FLIP8_SRCS:=flip_8bit.sv flip_8bit_half.sv
 TEST_FLIP8_SRCS:=test_flip8.sv $(FLIP8_SRCS)
 FLIP_SRCS:=flip_v2.sv extract_v.sv extract_a1h8.sv extract_a8h1.sv shift64.sv $(FLIP8_SRCS)
 TEST_FLIP_SRCS:=test_flip_v2.sv flip.sv flip_impl.sv upper_bit.sv $(FLIP_SRCS)
-SRCS:=iv_sim.sv pipeline.sv bram.sv flip.sv flip_impl.sv popcount.sv popcount_8bit.sv upper_bit.sv $(FLIP_SRCS)
+SRCS:=iv_sim.sv pipeline.sv bram.sv flip.sv flip_impl.sv popcount.sv popcount_8bit.sv upper_bit.sv next_bit_pos.sv $(FLIP_SRCS)
 IVFLAGS:=-g2012
 CXXFLAGS:=-std=c++17 -O2 -Wall -Wextra
 TARGETS:=reference-flip8.txt reference-flip.txt reference-pipeline.txt test-flip8 test-flip test-pipeline
