@@ -8,7 +8,8 @@ module pipeline(
   output reg [63:0] oPlayer,
   output reg [63:0] oOpponent,
   output reg signed [7:0] res,
-  output reg [2:0] o
+  output reg [2:0] o,
+  output reg [2:0] pidx
 );
 
 localparam MEMSIZE = 128;
@@ -32,6 +33,7 @@ logic [63:0] x7;
 logic [63:0] y7;
 logic signed [7:0] alpha7;
 logic signed [7:0] beta7;
+logic prev_passed7;
 logic [3:0] stack_index7;
 logic [2:0] stack_id7 = 7;
 logic is_moved7;
@@ -44,6 +46,7 @@ logic [63:0] x0;
 logic [63:0] y0;
 logic signed [7:0] alpha0;
 logic signed [7:0] beta0;
+logic prev_passed0;
 logic [3:0] stack_index0;
 logic [2:0] stack_id0 = 0;
 logic is_moved0;
@@ -56,6 +59,7 @@ always @(posedge iCLOCK) begin
   y0 <= y7;
   alpha0 <= alpha7;
   beta0 <= beta7;
+  prev_passed0 <= prev_passed7;
   stack_index0 <= stack_index7;
   stack_id0 <= stack_id7;
   is_moved0 <= is_moved7;
@@ -88,7 +92,7 @@ always @(posedge iCLOCK) begin
     alpha1 <= alpha0;
     beta1 <= beta0;
     pass1 <= 1'b1;
-    prev_passed1 <= 1'b0;
+    prev_passed1 <= prev_passed0;
   end else begin
     {x1, y1, result1, alpha1, beta1, pass1, prev_passed1} <= rdata;
   end
@@ -100,7 +104,6 @@ always @(posedge iCLOCK) begin
   stack_index1 <= stack_index0;
   stack_id1 <= stack_id0;
   mode1 <= mode0;
-  o <= stack_id0;
 end
 
 // DECODE1 to DECODE2
@@ -425,20 +428,24 @@ always @(posedge iCLOCK) begin
     score7 <= score6;
     res <= 8'h0;
   end
-  if (move6) begin
+  if (move6 && enable) begin
     x7 <= ~((player6 ^ oflip6) | posbit6);
     y7 <= ~(opponent6 ^ oflip6);
     alpha7 <= -beta6;
     beta7 <= -alpha6;
+    prev_passed7 <= 1'b0;
   end else begin
     x7 <= valid ? ~iOpponent : 64'h0;
-    y7 <= valid ? ~iPlayer : 64'h0;
+    y7 <= valid ? ~iPlayer : 64'hffffffffffffffff;
     alpha7 <= -8'd64;
     beta7 <= 8'd64;
+    prev_passed7 <= ~valid;
   end
-  oPlayer <= player6;
-  oOpponent <= opponent6;
+  oPlayer <= prev_passed6 ? opponent6 : player6;
+  oOpponent <= prev_passed6 ? player6 : opponent6;
   stack_id7 <= stack_id6;
+  o <= stack_id6;
+  pidx <= stack_index6;
 end
 
 // Stack
