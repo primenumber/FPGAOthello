@@ -334,14 +334,11 @@ wire signed [7:0] walpha = mode6 == M_PASS ? -beta6 : alpha6;
 wire signed [7:0] wbeta = mode6 == M_PASS ? -alpha6 : beta6;
 wire wpass = mode6 == M_PASS ? 1'b1 : (move6 ? 1'b0 : pass6);
 wire wprev_passed = mode6 == M_PASS ? 1'b1 : prev_passed6;
-reg [5:0] waddr;
-reg we;
-reg [153:0] wdata;
+wire [5:0] waddr = {stack_index6, stack_id6};
+wire we = mode6 == M_NORMAL | mode6 == M_PASS;
+wire [153:0] wdata = {wx, wy, wresult, walpha, wbeta, wpass, wprev_passed};
 
 always @(posedge iCLOCK) begin
-  waddr <= {stack_index6, stack_id6};
-  we <= mode6 == M_NORMAL | mode6 == M_PASS;
-  wdata <= {wx, wy, wresult, walpha, wbeta, wpass, wprev_passed};
   if (enable) begin
     case (mode6)
       M_NORMAL: begin

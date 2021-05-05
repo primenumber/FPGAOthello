@@ -16,11 +16,7 @@ always @(posedge clock) begin
 end
 
 always@(posedge clock) begin
-  if (we && wa == ra) begin
-    rd <= wd;
-  end else begin
-    rd <= bram[ra];
-  end
+  rd <= bram[ra];
 end
 
 endmodule
