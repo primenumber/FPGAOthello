@@ -3,7 +3,8 @@ module flip8(
   input wire [7:0] player,
   input wire [7:0] opponent,
   input wire [2:0] pos,
-  output reg [7:0] flip
+  output reg [7:0] flip_upper,
+  output reg [7:0] flip_lower
 );
 
 function [7:0] rev8;
@@ -13,23 +14,24 @@ begin
 end
 endfunction
 
-logic [7:0] flip_upper;
-logic [7:0] flip_lower;
+logic [7:0] flip_upper_w;
+logic [7:0] flip_lower_w;
 
 flip8_upper f8_upper(
   .player(player),
   .opponent(opponent),
   .pos(pos),
-  .flip(flip_upper));
+  .flip(flip_upper_w));
 
 flip8_upper f8_lower(
   .player(rev8(player)),
   .opponent(rev8(opponent)),
   .pos(3'h7 - pos),
-  .flip(flip_lower));
+  .flip(flip_lower_w));
 
 always@(posedge clock)begin
-  flip <= flip_upper | rev8(flip_lower);
+  flip_upper <= flip_upper_w;
+  flip_lower <= flip_lower_w;
 end
 
 endmodule

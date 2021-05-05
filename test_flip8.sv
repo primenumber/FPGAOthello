@@ -7,16 +7,26 @@ reg clock;
 logic [7:0] player;
 logic [7:0] opponent;
 logic [2:0] pos;
-logic [7:0] flip;
+logic [7:0] flip_u;
+logic [7:0] flip_l;
 logic [7:0] expected;
+
+function [7:0] rev8;
+  input [7:0] x;
+begin
+  rev8 = {x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7]};
+end
+endfunction
 
 flip8 flip8(
   .clock(clock),
   .player(player),
   .opponent(opponent),
   .pos(pos),
-  .flip(flip));
+  .flip_upper(flip_u),
+  .flip_lower(flip_l));
 
+wire [7:0] flip = flip_u | rev8(flip_l);
 integer i, j, fd;
 task task_test;
   begin
