@@ -75,7 +75,7 @@ task tsk_check;
       #PL_CYCLE;
     end
     k = 0;
-    for (j = 0; j < task_count * 1000 && k < task_count; j = j+1) begin
+    for (j = 0; j < task_count * 10000 && k < task_count; j = j+1) begin
       #PL_CYCLE;
       if (i > task_count) begin
         iPlayer <= 64'hffffffffffffffff;
