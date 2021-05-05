@@ -1,10 +1,15 @@
+#include "reversi.hpp"
 #include <algorithm>
 #include <iostream>
 #include <random>
-#include "reversi.hpp"
+#include <string>
 
-int main() {
-  constexpr size_t count = 100;
+int main(int argc, char** argv) {
+  if (argc < 2) {
+    std::cerr << "Usage: " << argv[0] << " NUM_DATA" << std::endl;
+    return EXIT_FAILURE;
+  }
+  size_t count = std::stoi(argv[1]);
   int empty_max = 7;
   std::random_device rd;
   std::mt19937 mt(rd());
