@@ -68,7 +68,7 @@ task tsk_check;
     enable <= 1'b1;
     
     valid <= 1'b1;
-    for (i = 0; i < 8; i = i+1) begin
+    for (i = 0; i <= 8; i = i+1) begin
       iPlayer <= player[i];
       iOpponent <= opponent[i];
       iTaskid <= i;
