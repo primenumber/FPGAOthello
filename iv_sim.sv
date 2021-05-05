@@ -8,10 +8,11 @@ reg enable;
 reg valid;
 reg [63:0] iPlayer;
 reg [63:0] iOpponent;
-logic signed [7:0] expected;
+reg [15:0] iTaskid;
 logic solved;
 logic [63:0] oPlayer;
 logic [63:0] oOpponent;
+logic [15:0] oTaskid;
 logic signed [7:0] res;
 logic [2:0] o;
 logic [2:0] pidx;
@@ -22,18 +23,31 @@ pipeline pipeline(
   .enable(enable),
   .iPlayer(iPlayer),
   .iOpponent(iOpponent),
+  .iTaskid(iTaskid),
   .solved(solved),
   .oPlayer(oPlayer),
   .oOpponent(oOpponent),
+  .oTaskid(oTaskid),
   .res(res),
   .o(o),
   .pidx(pidx));
 
-integer i, j, k, fd, finished;
+integer i, j, k, fd, task_count;
+bit [63:0] player[0:1000];
+bit [63:0] opponent[0:1000];
+bit signed [7:0] result[0:1000];
 time stones;
 task tsk_check;
   begin
+    task_count = 1000;
     fd = $fopen("reference-pipeline.txt", "r");
+    for (i = 0; i < task_count; i = i+1) begin
+      $fscanf(fd, "%d %d %d", player[i], opponent[i], result[i]);
+      //$display("%d %h %h %d", i, player[i], opponent[i], result[i]);
+    end
+    player[task_count] = 64'hffffffffffffffff;
+    opponent[task_count] = 64'h0;
+    result[task_count] = 16'h64;
     //iPlayer <= 64'h10B8DDE3B1B98284;
     //iOpponent <= 64'h8E45221C4E467C78;
     //expected <= 16;
@@ -53,46 +67,39 @@ task tsk_check;
     
     enable <= 1'b1;
     
-    for (i = 0; i < 100; i = i+1) begin
-      //iPlayer <= 64'h1e8c8c74f2cefa08;
-      //iOpponent <= 64'he173738b0d0101f5;
-      //expected <= -8;
-      //iPlayer <= 64'hffffffffffffffff;
-      //iOpponent <= 64'h0;
-      //expected <= 8'd64;
-      $fscanf(fd, "%d %d %d", iPlayer, iOpponent, expected);
-      valid <= 1'b1;
-      #(PL_CYCLE * 8);
-      valid <= 1'b0;
-      $display("To solve: ID=%d P=%h O=%h E=%h res=%d", i, iPlayer, iOpponent, ~(iPlayer | iOpponent), expected);
-      finished = 0;
-      for (j = 0; j < 100000 && !finished; j = j+1) begin
-        #PL_CYCLE;
-        //$display("%d %d %d %d %b", i, j, o, pidx, solved);
-        if (solved == 1'b1) begin
-          if (oPlayer == iPlayer && oOpponent == iOpponent) begin
-            $display("Solved: steps=%d P=%h O=%h res=%d ex=%d %d", j, oPlayer, oOpponent, res, expected, o);
-            if (res != expected) begin
-              $display("wrong answer");
-              $finish;
-            end else begin
-              $display("collect answer");
-              finished = 1;
-            end
+    valid <= 1'b1;
+    for (i = 0; i < 8; i = i+1) begin
+      iPlayer <= player[i];
+      iOpponent <= opponent[i];
+      iTaskid <= i;
+      #PL_CYCLE;
+    end
+    k = 0;
+    for (j = 0; j < task_count * 1000 && k < task_count; j = j+1) begin
+      #PL_CYCLE;
+      if (i > task_count) begin
+        iPlayer <= 64'hffffffffffffffff;
+        iOpponent <= 64'h0;
+        iTaskid <= 64'hffff;
+      end
+      //$display("%d %d %d %d %d", j, iTaskid, oTaskid, i, k);
+      if (solved == 1'b1) begin
+        if (oTaskid < 16'hffff) begin
+          $display("Solved: id=%d steps=%d P=%h O=%h res=%d ex=%d", oTaskid, j, oPlayer, oOpponent, res, result[oTaskid]);
+          if (res != result[oTaskid]) begin
+            $display("wrong answer");
+            $finish;
+          end else begin
+            $display("collect answer");
           end
+          k = k+1;
+          if (i <= task_count) begin
+            iPlayer <= player[i];
+            iOpponent <= opponent[i];
+            iTaskid <= i < task_count ? i : 16'hffff;
+          end
+          i = i+1;
         end
-      end
-      if (!finished) begin
-        $display("not solved!");
-        $finish;
-      end
-      k = 0;
-      for (j = 0; j < k + 8; j = j+1) begin
-        #PL_CYCLE;
-        if (solved == 1'b0) begin
-          k = j;
-        end
-        //$display("%d %d", j, k);
       end
     end
   end
@@ -109,7 +116,7 @@ initial begin
   enable = 1'b0;
   iPlayer <= 64'hffffffffffffffff;
   iOpponent <= 64'h0;
-  expected <= 8'h64;
+  iTaskid <= 16'hffff;
 
   #(PL_CYCLE * 5);
   $dumpfile("fpgaothello.vcd");
