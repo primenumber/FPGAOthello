@@ -279,6 +279,9 @@ logic pass5;
 logic prev_passed5;
 logic [3:0] stack_index5;
 logic [2:0] stack_id5 = 5;
+logic [63:0] player5;
+logic [63:0] opponent5;
+logic [63:0] posbit5;
 logic [2:0] mode5;
 logic signed [7:0] score5;
 logic [15:0] task_id5;
@@ -293,6 +296,9 @@ always @(posedge iCLOCK) begin
   prev_passed5 <= prev_passed4;
   stack_index5 <= stack_index4;
   stack_id5 <= stack_id4;
+  player5 <= x4 & ~y4;
+  opponent5 <= ~x4 & y4;
+  posbit5 <= (x4 & y4) & -(x4 & y4);
   mode5 <= mode4;
   score5 <= score4;
   task_id5 <= task_id4;
@@ -316,6 +322,20 @@ logic signed [7:0] score6;
 logic [63:0] oflip6;
 logic move6;
 logic [15:0] task_id6;
+logic [6:0] nxpcnt6;
+logic [6:0] nxocnt6;
+
+popcount popcnt3(
+  .clock(iCLOCK),
+  .x(opponent5 ^ oflip5),
+  .o(nxpcnt6)
+);
+
+popcount popcnt4(
+  .clock(iCLOCK),
+  .x((player5 ^ oflip5) | posbit5),
+  .o(nxocnt6)
+);
 
 always @(posedge iCLOCK) begin
   case (mode5)
@@ -339,9 +359,9 @@ always @(posedge iCLOCK) begin
   prev_passed6 <= prev_passed5;
   stack_index6 <= stack_index5;
   stack_id6 <= stack_id5;
-  player6 <= x5 & ~y5;
-  opponent6 <= ~x5 & y5;
-  posbit6 <= (x5 & y5) & -(x5 & y5);
+  player6 <= player5;
+  opponent6 <= opponent5;
+  posbit6 <= posbit5;
   mode6 <= mode5;
   score6 <= score5;
   oflip6 <= oflip5;
@@ -363,15 +383,25 @@ always @(posedge iCLOCK) begin
   if (enable) begin
     case (mode6)
       M_NORMAL: begin
-        score7 <= score6;
         if (move6) begin
-          stack_index7 <= stack_index6 + 1;
+          if ({1'b0, nxpcnt6} + nxocnt6 == 7'd64) begin
+            score7 <= prev_passed6 ? nxocnt6 - nxpcnt6 : nxpcnt6 - nxocnt6;
+            stack_index7 <= stack_index6 - 1;
+            is_moved7 <= 1'b0;
+            is_commit7 <= 1'b1;
+          end else begin
+            score7 <= score6;
+            stack_index7 <= stack_index6 + 1;
+            is_moved7 <= 1'b1;
+            is_commit7 <= 1'b0;
+          end
         end else begin
+          score7 <= score6;
           stack_index7 <= stack_index6;
+          is_moved7 <= 1'b0;
+          is_commit7 <= 1'b0;
         end
         solved <= 1'b0;
-        is_commit7 <= 1'b0;
-        is_moved7 <= move6;
         res <= 8'h0;
         task_id7 <= task_id6;
       end
