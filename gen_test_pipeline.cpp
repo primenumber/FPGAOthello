@@ -10,10 +10,14 @@ int main(int argc, char** argv) {
     return EXIT_FAILURE;
   }
   size_t count = std::stoi(argv[1]);
+  int empty_min = 1;
+  if (argc >= 3 ) {
+    empty_min = std::stoi(argv[2]);
+  }
   int empty_max = 7;
   std::random_device rd;
   std::mt19937 mt(rd());
-  std::uniform_int_distribution<int> empty_dis(1, empty_max);
+  std::uniform_int_distribution<int> empty_dis(empty_min, empty_max);
   for (size_t i = 0; i < count; ++i) {
     Board board;
     std::bernoulli_distribution dis_sq;

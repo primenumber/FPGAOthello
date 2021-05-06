@@ -28,7 +28,7 @@ gen-test-flip: gen_test_flip_v2.o reversi.o
 	$(CXX) -o $@ $(CXXFLAGS) $^
 
 reference-pipeline.txt: gen-test-pipeline
-	./$^ 1000 > $@
+	./$^ 1000 7 > $@
 
 gen-test-pipeline: gen_test_pipeline.o reversi.o
 	$(CXX) -o $@ $(CXXFLAGS) $^
