@@ -193,7 +193,11 @@ always @(posedge iCLOCK) begin
         if (prev_passed2) begin
           mode3 <= M_SAVE;
         end else begin
-          mode3 <= M_PASS;
+          if ((player2 | opponent2) == 64'hffffffffffffffff) begin
+            mode3 <= M_SAVE;
+          end else begin
+            mode3 <= M_PASS;
+          end
         end
       end else begin
         mode3 <= M_COMMIT;
@@ -372,7 +376,7 @@ always @(posedge iCLOCK) begin
         task_id7 <= task_id6;
       end
       M_SAVE: begin
-        score7 <= score6;
+        score7 <= prev_passed6 ? score6 : -score6;
         if (stack_index6) begin
           is_commit7 <= 1'b1;
           stack_index7 <= stack_index6 - 1;
