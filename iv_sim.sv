@@ -10,8 +10,6 @@ reg [63:0] iPlayer;
 reg [63:0] iOpponent;
 reg [15:0] iTaskid;
 logic solved;
-logic [63:0] oPlayer;
-logic [63:0] oOpponent;
 logic [15:0] oTaskid;
 logic signed [7:0] res;
 logic [2:0] o;
@@ -25,8 +23,6 @@ pipeline pipeline(
   .iOpponent(iOpponent),
   .iTaskid(iTaskid),
   .solved(solved),
-  .oPlayer(oPlayer),
-  .oOpponent(oOpponent),
   .oTaskid(oTaskid),
   .res(res),
   .o(o),
@@ -85,7 +81,7 @@ task tsk_check;
       //$display("%d %d %d %d %d", j, iTaskid, oTaskid, i, k);
       if (solved == 1'b1) begin
         if (oTaskid < 16'hffff) begin
-          $display("Solved: id=%d steps=%d P=%h O=%h res=%d ex=%d", oTaskid, j, oPlayer, oOpponent, res, result[oTaskid]);
+          $display("Solved: id=%d steps=%d P=%h O=%h res=%d ex=%d", oTaskid, j, player[oTaskid], opponent[oTaskid], res, result[oTaskid]);
           if (res != result[oTaskid]) begin
             $display("wrong answer");
             $finish;

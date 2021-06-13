@@ -54,8 +54,6 @@ fifo_generator_0 input_fifo (
 
 wire output_full;
 wire [63:0] o_result;
-wire [63:0] o_player;
-wire [7:0] o_opponent;
 wire [15:0] o_taskid;
 wire [143:0] o_data = {o_result, o_taskid};
 
@@ -82,8 +80,6 @@ pipeline pipeline(
   .iOpponent(fifo_out[127:64]),
   .iTaskid(fifo_out[143:128]),
   .solved(solved),
-  .oPlayer(o_player),
-  .oOpponent(o_opponent),
   .oTaskid(o_taskid),
   .res(o_result),
   .o(o));

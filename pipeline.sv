@@ -6,8 +6,6 @@ module pipeline(
   input wire [63:0] iOpponent,
   input wire [15:0] iTaskid,
   output reg solved,
-  output reg [63:0] oPlayer,
-  output reg [63:0] oOpponent,
   output reg [15:0] oTaskid,
   output reg signed [7:0] res,
   output reg [2:0] o,
@@ -491,8 +489,6 @@ always @(posedge iCLOCK) begin
     beta7 <= 8'd64;
     prev_passed7 <= ~valid;
   end
-  oPlayer <= prev_passed6 ? opponent6 : player6;
-  oOpponent <= prev_passed6 ? player6 : opponent6;
   oTaskid <= task_id6;
   stack_id7 <= stack_id6;
   o <= stack_id6;
