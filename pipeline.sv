@@ -160,6 +160,7 @@ logic [3:0] stack_index3;
 logic [2:0] stack_id3 = 3;
 logic [63:0] player3;
 logic [63:0] opponent3;
+logic [63:0] posbit3;
 logic [5:0] pos3;
 logic [6:0] pcnt3;
 logic [6:0] ocnt3;
@@ -219,6 +220,7 @@ always @(posedge iCLOCK) begin
   stack_id3 <= stack_id2;
   player3 <= player2;
   opponent3 <= opponent2;
+  posbit3 <= posbit2;
   task_id3 <= task_id2;
 end
 
@@ -232,6 +234,9 @@ logic pass4;
 logic prev_passed4;
 logic [3:0] stack_index4;
 logic [2:0] stack_id4 = 4;
+logic [63:0] player4;
+logic [63:0] opponent4;
+logic [63:0] posbit4;
 logic [2:0] mode4;
 logic signed [7:0] score4;
 logic [15:0] task_id4;
@@ -263,6 +268,9 @@ always @(posedge iCLOCK) begin
   prev_passed4 <= prev_passed3;
   stack_index4 <= stack_index3;
   stack_id4 <= stack_id3;
+  player4 <= player3;
+  opponent4 <= opponent3;
+  posbit4 <= posbit3;
   mode4 <= mode3;
   task_id4 <= task_id3;
 end
@@ -294,9 +302,9 @@ always @(posedge iCLOCK) begin
   prev_passed5 <= prev_passed4;
   stack_index5 <= stack_index4;
   stack_id5 <= stack_id4;
-  player5 <= x4 & ~y4;
-  opponent5 <= ~x4 & y4;
-  posbit5 <= (x4 & y4) & -(x4 & y4);
+  player5 <= player4;
+  opponent5 <= opponent4;
+  posbit5 <= posbit4;
   mode5 <= mode4;
   score5 <= score4;
   task_id5 <= task_id4;
