@@ -12,8 +12,6 @@ reg [15:0] iTaskid;
 logic solved;
 logic [15:0] oTaskid;
 logic signed [7:0] res;
-logic [2:0] o;
-logic [2:0] pidx;
 
 pipeline pipeline(
   .iCLOCK(iCLOCK),
@@ -24,9 +22,7 @@ pipeline pipeline(
   .iTaskid(iTaskid),
   .solved(solved),
   .oTaskid(oTaskid),
-  .res(res),
-  .o(o),
-  .pidx(pidx));
+  .res(res));
 
 integer i, j, k, fd, task_count;
 bit [63:0] player[0:1000];
@@ -56,7 +52,6 @@ task tsk_check;
 
     for (i = 0; i < 8; i = i+1) begin
       #PL_CYCLE;
-      $display("%h", o);
     end
     
     $display("!!!!!start!!!!!");

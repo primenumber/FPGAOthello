@@ -37,7 +37,7 @@ wire wr_rst_busy_1;
 wire rd_rst_busy_1;
 wire solved;
 
-wire [143:0] fifo_out;
+wire [143:0] dout;
 
 fifo_generator_0 input_fifo (
   .clk(clock),                  // input wire clk
@@ -45,7 +45,7 @@ fifo_generator_0 input_fifo (
   .din(input_data),                  // input wire [17 : 0] din
   .wr_en(input_enable),              // input wire wr_en
   .rd_en(solved),              // input wire rd_en
-  .dout(dout),                // output wire [144 : 0] dout
+  .dout(dout),                // output wire [143 : 0] dout
   .full(input_full),                // output wire full
   .empty(empty_fifo),              // output wire empty
   .wr_rst_busy(wr_rst_busy_0),  // output wire wr_rst_busy
@@ -53,9 +53,9 @@ fifo_generator_0 input_fifo (
 );
 
 wire output_full;
-wire [63:0] o_result;
+wire [7:0] o_result;
 wire [15:0] o_taskid;
-wire [143:0] o_data = {o_result, o_taskid};
+wire [23:0] o_data = {o_result, o_taskid};
 
 fifo_generator_1 output_fifo (
   .clk(clock),                  // input wire clk
@@ -76,12 +76,11 @@ pipeline pipeline(
   .iCLOCK(clock),
   .valid(valid),
   .enable(1'b1),
-  .iPlayer(fifo_out[63:0]),
-  .iOpponent(fifo_out[127:64]),
-  .iTaskid(fifo_out[143:128]),
+  .iPlayer(dout[63:0]),
+  .iOpponent(dout[127:64]),
+  .iTaskid(dout[143:128]),
   .solved(solved),
   .oTaskid(o_taskid),
-  .res(o_result),
-  .o(o));
+  .res(o_result));
 
 endmodule

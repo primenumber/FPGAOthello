@@ -7,9 +7,7 @@ module pipeline(
   input wire [15:0] iTaskid,
   output reg solved,
   output reg [15:0] oTaskid,
-  output reg signed [7:0] res,
-  output reg [2:0] o,
-  output reg [2:0] pidx
+  output reg signed [7:0] res
 );
 
 localparam MEMSIZE = 128;
@@ -497,8 +495,6 @@ always @(posedge iCLOCK) begin
   end
   oTaskid <= task_id6;
   stack_id7 <= stack_id6;
-  o <= stack_id6;
-  pidx <= stack_index6;
 end
 
 // Stack

@@ -8,7 +8,6 @@ reg enable;
 reg [63:0] iPlayer;
 reg [63:0] iOpponent;
 wire solved;
-reg [4:0] o;
 wire signed [7:0] res;
 
 pipeline TARGET(
