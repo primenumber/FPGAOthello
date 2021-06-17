@@ -123,8 +123,7 @@ logic [3:0] stack_index2;
 logic [2:0] stack_id2 = 2;
 logic [63:0] player2;
 logic [63:0] opponent2;
-logic [63:0] remain2;
-logic [63:0] under_pos2;
+logic remain2;
 logic [63:0] posbit2;
 logic [2:0] mode2;
 logic [15:0] task_id2;
@@ -141,8 +140,7 @@ always @(posedge iCLOCK) begin
   stack_id2 <= stack_id1;
   player2 <= x1 & ~y1;
   opponent2 <= ~x1 & y1;
-  remain2 <= x1 & y1;
-  under_pos2 <= ((x1 & y1) - 1) & ~(x1 & y1);
+  remain2 <= |(x1 & y1);
   posbit2 <= (x1 & y1) & -(x1 & y1);
   mode2 <= mode1;
   task_id2 <= task_id1;
@@ -187,7 +185,7 @@ next_bit_pos nbpos(
 
 always @(posedge iCLOCK) begin
   if (mode2 != M_START) begin
-    if (|remain2 == 1'b0) begin
+    if (remain2 == 1'b0) begin
       if (pass2) begin
         if (prev_passed2) begin
           mode3 <= M_SAVE;
