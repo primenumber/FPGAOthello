@@ -54,7 +54,7 @@ logic signed [7:0] score0;
 logic [2:0] mode0;
 logic [15:0] task_id0;
 
-always @(posedge iCLOCK) begin
+always_ff @(posedge iCLOCK) begin
   x0 <= x7;
   y0 <= y7;
   alpha0 <= alpha7;
@@ -86,7 +86,7 @@ logic [15:0] task_id1;
 wire [5:0] raddr = {stack_index7, stack_id7};
 logic [153:0] rdata;
 
-always @(posedge iCLOCK) begin
+always_ff @(posedge iCLOCK) begin
   if (is_moved0) begin
     x1 <= x0;
     y1 <= y0;
@@ -126,7 +126,7 @@ logic [63:0] posbit2;
 logic [2:0] mode2;
 logic [15:0] task_id2;
 
-always @(posedge iCLOCK) begin
+always_ff @(posedge iCLOCK) begin
   x2 <= x1;
   y2 <= y1;
   result2 <= max(result1, score1);
@@ -181,7 +181,7 @@ next_bit_pos nbpos(
   .y(pos3)
 );
 
-always @(posedge iCLOCK) begin
+always_ff @(posedge iCLOCK) begin
   if (mode2 != M_START) begin
     if (remain2 == 1'b0) begin
       if (pass2) begin
@@ -247,7 +247,7 @@ flip_v2 flip(
   .flip(oflip5)
 );
 
-always @(posedge iCLOCK) begin
+always_ff @(posedge iCLOCK) begin
   if (pcnt3 > ocnt3) begin
     score4 <= 64 - (ocnt3 << 1);
   end else if (pcnt3 < ocnt3) begin
@@ -288,7 +288,7 @@ logic [2:0] mode5;
 logic signed [7:0] score5;
 logic [15:0] task_id5;
 
-always @(posedge iCLOCK) begin
+always_ff @(posedge iCLOCK) begin
   x5 <= x4;
   y5 <= y4;
   result5 <= result4;
@@ -339,7 +339,7 @@ popcount popcnt4(
   .o(nxocnt6)
 );
 
-always @(posedge iCLOCK) begin
+always_ff @(posedge iCLOCK) begin
   case (mode5)
     M_NORMAL: begin
       if (|oflip5) begin
@@ -381,7 +381,7 @@ wire [5:0] waddr = {stack_index6, stack_id6};
 wire we = mode6 == M_NORMAL | mode6 == M_PASS;
 wire [153:0] wdata = {wx, wy, wresult, walpha, wbeta, wpass, wprev_passed};
 
-always @(posedge iCLOCK) begin
+always_ff @(posedge iCLOCK) begin
   if (enable) begin
     case (mode6)
       M_NORMAL: begin
