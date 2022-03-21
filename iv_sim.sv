@@ -12,6 +12,7 @@ reg [15:0] iTaskid;
 logic solved;
 logic [15:0] oTaskid;
 logic signed [7:0] res;
+logic [15:0] oNodes;
 
 pipeline pipeline(
   .iCLOCK(iCLOCK),
@@ -22,9 +23,10 @@ pipeline pipeline(
   .iTaskid(iTaskid),
   .solved(solved),
   .oTaskid(oTaskid),
-  .res(res));
+  .res(res),
+  .oNodes(oNodes));
 
-integer i, j, k, fd, task_count;
+integer i, j, k, fd, task_count, nodes_sum;
 bit [63:0] player[0:1000];
 bit [63:0] opponent[0:1000];
 bit signed [7:0] result[0:1000];
@@ -32,6 +34,7 @@ time stones;
 task tsk_check;
   begin
     task_count = 1000;
+    nodes_sum = 0;
     fd = $fopen("reference-pipeline.txt", "r");
     for (i = 0; i < task_count; i = i+1) begin
       $fscanf(fd, "%d %d %d", player[i], opponent[i], result[i]);
@@ -76,7 +79,8 @@ task tsk_check;
       //$display("%d %d %d %d %d", j, iTaskid, oTaskid, i, k);
       if (solved == 1'b1) begin
         if (oTaskid < 16'hffff) begin
-          $display("Solved: id=%d steps=%d P=%h O=%h res=%d ex=%d", oTaskid, j, player[oTaskid], opponent[oTaskid], res, result[oTaskid]);
+          nodes_sum += oNodes;
+          $display("Solved: id=%d steps=%d P=%h O=%h res=%d ex=%d nodes=%d (sum=%d)", oTaskid, j, player[oTaskid], opponent[oTaskid], res, result[oTaskid], oNodes, nodes_sum);
           if (res != result[oTaskid]) begin
             $display("wrong answer");
             $finish;

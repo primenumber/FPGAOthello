@@ -7,7 +7,8 @@ module pipeline(
   input wire [15:0] iTaskid,
   output reg solved,
   output reg [15:0] oTaskid,
-  output reg signed [7:0] res
+  output reg signed [7:0] res,
+  output reg [15:0] oNodes
 );
 
 localparam MEMSIZE = 128;
@@ -39,6 +40,7 @@ logic is_commit7;
 logic signed [7:0] score7;
 logic [2:0] mode7;
 logic [15:0] task_id7;
+logic [15:0] node_count7;
 
 // FETCH1 to FETCH2
 logic [63:0] x0;
@@ -53,6 +55,7 @@ logic is_commit0;
 logic signed [7:0] score0;
 logic [2:0] mode0;
 logic [15:0] task_id0;
+logic [15:0] node_count0;
 
 always_ff @(posedge iCLOCK) begin
   x0 <= x7;
@@ -67,6 +70,7 @@ always_ff @(posedge iCLOCK) begin
   score0 <= score7;
   mode0 <= mode7;
   task_id0 <= task_id7;
+  node_count0 <= node_count7;
 end
 
 // FETCH2 to DECODE1
@@ -82,6 +86,7 @@ logic [2:0] stack_id1 = 1;
 logic signed [7:0] score1;
 logic [2:0] mode1;
 logic [15:0] task_id1;
+logic [15:0] node_count1;
 
 wire [5:0] raddr = {stack_index7, stack_id7};
 logic [153:0] rdata;
@@ -107,6 +112,7 @@ always_ff @(posedge iCLOCK) begin
   stack_id1 <= stack_id0;
   mode1 <= mode0;
   task_id1 <= task_id0;
+  node_count1 <= node_count0;
 end
 
 // DECODE1 to DECODE2
@@ -125,6 +131,7 @@ logic remain2;
 logic [63:0] posbit2;
 logic [2:0] mode2;
 logic [15:0] task_id2;
+logic [15:0] node_count2;
 
 always_ff @(posedge iCLOCK) begin
   x2 <= x1;
@@ -142,6 +149,7 @@ always_ff @(posedge iCLOCK) begin
   posbit2 <= (x1 & y1) & -(x1 & y1);
   mode2 <= mode1;
   task_id2 <= task_id1;
+  node_count2 <= node_count1;
 end
 
 // DECODE2 to EXEC1
@@ -162,6 +170,7 @@ logic [6:0] pcnt3;
 logic [6:0] ocnt3;
 logic [2:0] mode3;
 logic [15:0] task_id3;
+logic [15:0] node_count3;
 
 popcount popcnt1(
   .clock(iCLOCK),
@@ -218,6 +227,7 @@ always_ff @(posedge iCLOCK) begin
   opponent3 <= opponent2;
   posbit3 <= posbit2;
   task_id3 <= task_id2;
+  node_count3 <= node_count2;
 end
 
 // EXEC1 to EXEC2
@@ -236,6 +246,7 @@ logic [63:0] posbit4;
 logic [2:0] mode4;
 logic signed [7:0] score4;
 logic [15:0] task_id4;
+logic [15:0] node_count4;
 
 logic [63:0] oflip5;
 
@@ -269,6 +280,7 @@ always_ff @(posedge iCLOCK) begin
   posbit4 <= posbit3;
   mode4 <= mode3;
   task_id4 <= task_id3;
+  node_count4 <= node_count3;
 end
 
 // EXEC2 to WRITE1
@@ -287,6 +299,7 @@ logic [63:0] posbit5;
 logic [2:0] mode5;
 logic signed [7:0] score5;
 logic [15:0] task_id5;
+logic [15:0] node_count5;
 
 always_ff @(posedge iCLOCK) begin
   x5 <= x4;
@@ -304,6 +317,7 @@ always_ff @(posedge iCLOCK) begin
   mode5 <= mode4;
   score5 <= score4;
   task_id5 <= task_id4;
+  node_count5 <= node_count4;
 end
 
 // WRITE1 to WRITE2
@@ -326,6 +340,7 @@ logic move6;
 logic [15:0] task_id6;
 logic [6:0] nxpcnt6;
 logic [6:0] nxocnt6;
+logic [15:0] node_count6;
 
 popcount popcnt3(
   .clock(iCLOCK),
@@ -368,6 +383,7 @@ always_ff @(posedge iCLOCK) begin
   score6 <= score5;
   oflip6 <= oflip5;
   task_id6 <= task_id5;
+  node_count6 <= node_count5;
 end
 
 wire [63:0] wx = mode6 == M_PASS ? ~player6 : (x6 ^ posbit6);
@@ -397,11 +413,13 @@ always_ff @(posedge iCLOCK) begin
             is_moved7 <= 1'b1;
             is_commit7 <= 1'b0;
           end
+          node_count7 <= node_count6 + 1;
         end else begin
           score7 <= score6;
           stack_index7 <= stack_index6;
           is_moved7 <= 1'b0;
           is_commit7 <= 1'b0;
+          node_count7 <= node_count6;
         end
         solved <= 1'b0;
         res <= 8'h0;
@@ -415,12 +433,14 @@ always_ff @(posedge iCLOCK) begin
           is_moved7 <= 1'b0;
           solved <= 1'b0;
           task_id7 <= task_id6;
+          node_count7 <= node_count6;
         end else begin
           is_commit7 <= 1'b0;
           stack_index7 <= 0;
           is_moved7 <= 1'b1;
           solved <= 1'b1;
           task_id7 <= valid ? iTaskid : task_id6;
+          node_count7 <= 1;
         end
         res <= -score6;
       end
@@ -432,12 +452,14 @@ always_ff @(posedge iCLOCK) begin
           is_moved7 <= 1'b0;
           solved <= 1'b0;
           task_id7 <= task_id6;
+          node_count7 <= node_count6;
         end else begin
           is_commit7 <= 1'b0;
           stack_index7 <= 0;
           is_moved7 <= 1'b1;
           solved <= 1'b1;
           task_id7 <= valid ? iTaskid : task_id6;
+          node_count7 <= 1;
         end
         res <= prev_passed6 ? -result6 : result6;
       end
@@ -449,6 +471,7 @@ always_ff @(posedge iCLOCK) begin
         solved <= 1'b0;
         res <= 8'h0;
         task_id7 <= task_id6;
+        node_count7 <= node_count6 + 1;
       end
       M_START: begin
         score7 <= score6;
@@ -458,6 +481,7 @@ always_ff @(posedge iCLOCK) begin
         solved <= 1'b0;
         res <= 8'h0;
         task_id7 <= valid ? iTaskid : task_id6;
+        node_count7 <= 1;
       end
       default: begin
         score7 <= score6;
@@ -467,6 +491,7 @@ always_ff @(posedge iCLOCK) begin
         solved <= 1'b0;
         res <= 8'h0;
         task_id7 <= task_id6;
+        node_count7 <= node_count6;
       end
     endcase
     mode7 <= M_NORMAL;
@@ -479,6 +504,7 @@ always_ff @(posedge iCLOCK) begin
     score7 <= score6;
     res <= 8'h0;
     task_id7 <= task_id6;
+    node_count7 <= 0;
   end
   if (move6 && enable) begin
     x7 <= ~((player6 ^ oflip6) | posbit6);
@@ -495,6 +521,7 @@ always_ff @(posedge iCLOCK) begin
   end
   oTaskid <= task_id6;
   stack_id7 <= stack_id6;
+  oNodes <= node_count6;
 end
 
 // Stack
