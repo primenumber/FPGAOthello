@@ -12,19 +12,7 @@ logic solved;
 logic [15:0] oTaskid;
 logic signed [7:0] res;
 logic [15:0] oNodes;
-logic [3:0] count;
 
-//pipeline pipeline(
-//  .iCLOCK(clock),
-//  .valid(valid),
-//  .enable(~reset),
-//  .iPlayer(iPlayer),
-//  .iOpponent(iOpponent),
-//  .iTaskid(iTaskid),
-//  .solved(solved),
-//  .oTaskid(oTaskid),
-//  .res(res),
-//  .oNodes(oNodes));
 logic [39:0] output_data;
 logic output_valid;
 logic output_ready;
@@ -36,8 +24,7 @@ feed feed(
   .input_ready(input_ready),
   .output_data(output_data),
   .output_valid(output_valid),
-  .output_ready(output_ready),
-  .count(count)
+  .output_ready(output_ready)
 );
 
 assign {res, oTaskid, oNodes} = output_data;
@@ -96,7 +83,7 @@ task tsk_check;
         iOpponent <= 64'h0;
         iTaskid <= 64'hffff;
       end
-      //$display("%d %d %d %d %d %d", j, iTaskid, oTaskid, i, k, count);
+      //$display("%d %d %d %d %d", j, iTaskid, oTaskid, i, k);
       if (solved == 1'b1) begin
         if (oTaskid < 16'hffff) begin
           nodes_sum += oNodes;
