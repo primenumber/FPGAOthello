@@ -1,86 +1,78 @@
-`timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 2021/05/01 10:46:55
-// Design Name: 
-// Module Name: feed
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
-
-
 module feed(
     input clock,
-    input reg [17:0] input_data,
-    output reg input_full,
-    input reg input_enable,
-    output reg [23:0] output_data,
-    output reg output_empty,
-    input reg output_enable
+    input reset,
+    input wire [143:0] input_data,
+    input wire input_valid,
+    output wire input_ready,
+    output wire [39:0] output_data,
+    output wire output_valid,
+    input wire output_ready,
+    output wire [3:0] count
     );
 
-wire empty_fifo;
-wire wr_rst_busy_0;
-wire rd_rst_busy_0;
-wire wr_rst_busy_1;
-wire rd_rst_busy_1;
-wire solved;
+logic [143:0] input_buffer;
+logic input_buffer_valid;
+logic solved;
+logic [39:0] output_buffer;
+logic output_buffer_valid;
+logic [3:0] fifo_count;
+logic [63:0] i_player;
+logic [63:0] i_opponent;
+logic [15:0] i_taskid;
+logic [7:0] o_result;
+logic [15:0] o_taskid;
+logic [15:0] o_nodes;
+logic fifo_ren;
+logic fifo_wen;
 
-wire [143:0] dout;
+assign {i_player, i_opponent, i_taskid} = input_buffer;
+assign output_buffer = {o_result, o_taskid, o_nodes};
+assign input_ready = !input_buffer_valid && count < 4;
+assign count = fifo_count;
 
-fifo_generator_0 input_fifo (
-  .clk(clock),                  // input wire clk
-  .srst(1'b0),                // input wire srst
-  .din(input_data),                  // input wire [17 : 0] din
-  .wr_en(input_enable),              // input wire wr_en
-  .rd_en(solved),              // input wire rd_en
-  .dout(dout),                // output wire [143 : 0] dout
-  .full(input_full),                // output wire full
-  .empty(empty_fifo),              // output wire empty
-  .wr_rst_busy(wr_rst_busy_0),  // output wire wr_rst_busy
-  .rd_rst_busy(rd_rst_busy_0)  // output wire rd_rst_busy
-);
-
-wire output_full;
-wire [7:0] o_result;
-wire [15:0] o_taskid;
-wire [23:0] o_data = {o_result, o_taskid};
-
-fifo_generator_1 output_fifo (
-  .clk(clock),                  // input wire clk
-  .srst(1'b0),                // input wire srst
-  .din(o_data),                  // input wire [143 : 0] din
-  .wr_en(solved),              // input wire wr_en
-  .rd_en(output_enable),              // input wire rd_en
-  .dout(output_data),                // output wire [17 : 0] dout
-  .full(output_full),                // output wire full
-  .empty(output_empty),              // output wire empty
-  .wr_rst_busy(wr_rst_busy_1),  // output wire wr_rst_busy
-  .rd_rst_busy(rd_rst_busy_1)  // output wire rd_rst_busy
-);
-
-wire valid = !empty_fifo;
+always_ff@(posedge clock or posedge reset) begin
+  if (reset) begin
+    input_buffer_valid <= 1'b0;
+    input_buffer <= 144'hffffffffffffffffffffffffffffffffffff;
+  end else begin
+    if (input_ready && input_valid) begin
+      input_buffer_valid <= 1'b1;
+      input_buffer <= input_data;
+    end else if (solved) begin
+      input_buffer_valid <= 1'b0;
+      input_buffer <= input_buffer;
+    end else begin
+      input_buffer_valid <= input_buffer_valid;
+      input_buffer <= input_buffer;
+    end
+  end
+end
 
 pipeline pipeline(
   .iCLOCK(clock),
-  .valid(valid),
-  .enable(1'b1),
-  .iPlayer(dout[63:0]),
-  .iOpponent(dout[127:64]),
-  .iTaskid(dout[143:128]),
+  .valid(input_buffer_valid),
+  .enable(~reset),
+  .iPlayer(i_player),
+  .iOpponent(i_opponent),
+  .iTaskid(i_taskid),
   .solved(solved),
   .oTaskid(o_taskid),
-  .res(o_result));
+  .res(o_result),
+  .oNodes(o_nodes)
+);
+
+assign fifo_ren = output_ready && output_valid;
+assign output_valid = fifo_count != 0;
+assign fifo_wen = solved;
+
+fifo #(.width(40), .addr_bits(3)) o_fifo(
+  .clock(clock),
+  .reset(reset),
+  .ren(fifo_ren),
+  .rdata(output_data),
+  .wen(fifo_wen),
+  .wdata(output_buffer),
+  .count(fifo_count)
+);
 
 endmodule

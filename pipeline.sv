@@ -58,18 +58,27 @@ logic [15:0] task_id0;
 logic [15:0] node_count0;
 
 always_ff @(posedge iCLOCK) begin
-  x0 <= x7;
-  y0 <= y7;
-  alpha0 <= alpha7;
-  beta0 <= beta7;
-  prev_passed0 <= prev_passed7;
+  if (solved) begin
+    x0 <= valid ? ~iOpponent : 64'h0;
+    y0 <= valid ? ~iPlayer : 64'hffffffffffffffff;
+    alpha0 <= -8'd64;
+    beta0 <= 8'd64;
+    prev_passed0 <= ~valid;
+    task_id0 <= valid ? iTaskid : 16'hffff;
+  end else begin
+    x0 <= x7;
+    y0 <= y7;
+    alpha0 <= alpha7;
+    beta0 <= beta7;
+    prev_passed0 <= prev_passed7;
+    task_id0 <= task_id7;
+  end
   stack_index0 <= stack_index7;
   stack_id0 <= stack_id7;
   is_moved0 <= is_moved7;
   is_commit0 <= is_commit7;
   score0 <= score7;
   mode0 <= mode7;
-  task_id0 <= task_id7;
   node_count0 <= node_count7;
 end
 
@@ -423,7 +432,6 @@ always_ff @(posedge iCLOCK) begin
         end
         solved <= 1'b0;
         res <= 8'h0;
-        task_id7 <= task_id6;
       end
       M_SAVE: begin
         score7 <= prev_passed6 ? score6 : -score6;
@@ -432,14 +440,12 @@ always_ff @(posedge iCLOCK) begin
           stack_index7 <= stack_index6 - 1;
           is_moved7 <= 1'b0;
           solved <= 1'b0;
-          task_id7 <= task_id6;
           node_count7 <= node_count6;
         end else begin
           is_commit7 <= 1'b0;
           stack_index7 <= 0;
           is_moved7 <= 1'b1;
           solved <= 1'b1;
-          task_id7 <= valid ? iTaskid : task_id6;
           node_count7 <= 1;
         end
         res <= -score6;
@@ -451,14 +457,12 @@ always_ff @(posedge iCLOCK) begin
           stack_index7 <= stack_index6 - 1;
           is_moved7 <= 1'b0;
           solved <= 1'b0;
-          task_id7 <= task_id6;
           node_count7 <= node_count6;
         end else begin
           is_commit7 <= 1'b0;
           stack_index7 <= 0;
           is_moved7 <= 1'b1;
           solved <= 1'b1;
-          task_id7 <= valid ? iTaskid : task_id6;
           node_count7 <= 1;
         end
         res <= prev_passed6 ? -result6 : result6;
@@ -470,7 +474,6 @@ always_ff @(posedge iCLOCK) begin
         is_moved7 <= 1'b0;
         solved <= 1'b0;
         res <= 8'h0;
-        task_id7 <= task_id6;
         node_count7 <= node_count6 + 1;
       end
       M_START: begin
@@ -478,9 +481,8 @@ always_ff @(posedge iCLOCK) begin
         is_commit7 <= 1'b0;
         stack_index7 <= 0;
         is_moved7 <= 1'b1;
-        solved <= 1'b0;
+        solved <= 1'b1;
         res <= 8'h0;
-        task_id7 <= valid ? iTaskid : task_id6;
         node_count7 <= 1;
       end
       default: begin
@@ -490,7 +492,6 @@ always_ff @(posedge iCLOCK) begin
         is_moved7 <= 1'b0;
         solved <= 1'b0;
         res <= 8'h0;
-        task_id7 <= task_id6;
         node_count7 <= node_count6;
       end
     endcase
@@ -503,22 +504,22 @@ always_ff @(posedge iCLOCK) begin
     solved <= 1'b0;
     score7 <= score6;
     res <= 8'h0;
-    task_id7 <= task_id6;
     node_count7 <= 0;
   end
-  if (move6 && enable) begin
+  if (enable) begin
     x7 <= ~((player6 ^ oflip6) | posbit6);
     y7 <= ~(opponent6 ^ oflip6);
     alpha7 <= -beta6;
     beta7 <= -alpha6;
     prev_passed7 <= 1'b0;
   end else begin
-    x7 <= valid ? ~iOpponent : 64'h0;
-    y7 <= valid ? ~iPlayer : 64'hffffffffffffffff;
+    x7 <= 64'h0;
+    y7 <= 64'hffffffffffffffff;
     alpha7 <= -8'd64;
     beta7 <= 8'd64;
-    prev_passed7 <= ~valid;
+    prev_passed7 <= 1'b1;
   end
+  task_id7 <= task_id6;
   oTaskid <= task_id6;
   stack_id7 <= stack_id6;
   oNodes <= node_count6;
