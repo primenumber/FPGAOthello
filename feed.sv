@@ -6,7 +6,8 @@ module feed(
     output wire input_ready,
     output wire [39:0] output_data,
     output wire output_valid,
-    input wire output_ready
+    input wire output_ready,
+    output wire [4:0] count
     );
 
 logic [143:0] input_buffer;
@@ -27,6 +28,7 @@ logic fifo_wen;
 assign {i_player, i_opponent, i_taskid} = input_buffer;
 assign output_buffer = {o_result, o_taskid, o_nodes};
 assign input_ready = !input_buffer_valid && fifo_count <= 8;
+assign count = fifo_count;
 
 always_ff@(posedge clock or posedge reset) begin
   if (reset) begin
@@ -38,10 +40,6 @@ always_ff@(posedge clock or posedge reset) begin
       input_buffer <= input_data;
     end else if (solved) begin
       input_buffer_valid <= 1'b0;
-      input_buffer <= input_buffer;
-    end else begin
-      input_buffer_valid <= input_buffer_valid;
-      input_buffer <= input_buffer;
     end
   end
 end
@@ -61,7 +59,7 @@ pipeline pipeline(
 
 assign fifo_ren = output_ready && output_valid;
 assign output_valid = fifo_count != 0;
-assign fifo_wen = solved;
+assign fifo_wen = solved && o_taskid != 16'hffff;
 
 fifo #(.width(40), .addr_bits(4)) o_fifo(
   .clock(clock),

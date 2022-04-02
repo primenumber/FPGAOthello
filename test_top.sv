@@ -1,5 +1,5 @@
 `timescale 1 ps / 1 ps
-module processer_sim;
+module test_top;
 
 localparam PL_CYCLE = 20;
 
@@ -13,10 +13,11 @@ logic [15:0] oTaskid;
 logic signed [7:0] res;
 logic [15:0] oNodes;
 
+logic input_valid;
 logic [39:0] output_data;
 logic output_valid;
 logic output_ready;
-feed feed(
+branch_feeder branch_feeder(
   .clock(clock),
   .reset(reset),
   .input_data({iPlayer, iOpponent, iTaskid}),
@@ -28,7 +29,6 @@ feed feed(
 );
 
 assign {res, oTaskid, oNodes} = output_data;
-assign input_valid = 1'b1;
 assign output_ready = 1'b1;
 assign solved = output_valid;
 
@@ -37,13 +37,37 @@ bit [63:0] player[0:1000];
 bit [63:0] opponent[0:1000];
 bit signed [7:0] result[0:1000];
 time stones;
+
+always_ff@(posedge clock or posedge reset) begin
+  if (reset) begin
+    i <= 0;
+    input_valid <= 1'b0;
+  end else begin
+    if (input_ready) begin
+      if (i < task_count) begin
+        iPlayer <= player[i];
+        iOpponent <= opponent[i];
+        iTaskid <= i;
+        i <= i+1;
+        input_valid <= 1'b1;
+      end else if (i >= task_count) begin
+        iPlayer <= 64'hffffffffffffffff;
+        iOpponent <= 64'h0;
+        iTaskid <= 64'hffff;
+        input_valid <= 1'b0;
+      end
+    end
+  end
+end
+
+int tid;
 task tsk_check;
   begin
     task_count = 1000;
     nodes_sum = 0;
     fd = $fopen("reference-pipeline.txt", "r");
-    for (i = 0; i < task_count; i = i+1) begin
-      $fscanf(fd, "%d %d %d", player[i], opponent[i], result[i]);
+    for (tid = 0; tid < task_count; tid = tid+1) begin
+      $fscanf(fd, "%d %d %d", player[tid], opponent[tid], result[tid]);
       //$display("%d %h %h %d", i, player[i], opponent[i], result[i]);
     end
     player[task_count] = 64'hffffffffffffffff;
@@ -58,52 +82,25 @@ task tsk_check;
     //iPlayer <= 64'hBF8387EBB3F8C002;
     //iOpponent <= 64'h407C78144C073F3D;
     //expected <= 2;
-
-    for (i = 0; i < 8; i = i+1) begin
-      #PL_CYCLE;
-    end
     
     $display("!!!!!start!!!!!");
     
     reset <= 1'b0;
-    
-    for (i = 0; i < 8; i=i) begin
-      if (input_ready) begin
-        iPlayer <= player[i];
-        iOpponent <= opponent[i];
-        iTaskid <= i;
-        i = i+1;
-      end
-      #PL_CYCLE;
-    end
     k = 0;
     for (j = 0; j < task_count * 10000 && k < task_count; j = j+1) begin
-      if (i > task_count) begin
-        iPlayer <= 64'hffffffffffffffff;
-        iOpponent <= 64'h0;
-        iTaskid <= 64'hffff;
-      end
       //$display("%d %d %d %d %d", j, iTaskid, oTaskid, i, k);
       if (solved == 1'b1) begin
         if (oTaskid < 16'hffff) begin
           nodes_sum += oNodes;
-          $display("Solved: id=%d steps=%d P=%h O=%h res=%d ex=%d nodes=%d (sum=%d)", oTaskid, j, player[oTaskid], opponent[oTaskid], res, result[oTaskid], oNodes, nodes_sum);
+          k = k+1;
+          $display("%d Solved: id=%d steps=%d P=%h O=%h res=%d ex=%d nodes=%d (sum=%d)", k, oTaskid, j, player[oTaskid], opponent[oTaskid], res, result[oTaskid], oNodes, nodes_sum);
           if (res != result[oTaskid]) begin
             $display("wrong answer");
             $finish;
           end else begin
             $display("collect answer");
           end
-          k = k+1;
         end
-      end
-      if (input_ready) begin
-        if (i <= task_count) begin
-          iPlayer <= player[i];
-          iOpponent <= opponent[i];
-          iTaskid <= i < task_count ? i : 16'hffff;
-        end
-        i = i+1;
       end
       #PL_CYCLE;
     end
@@ -124,8 +121,8 @@ initial begin
   iTaskid <= 16'hffff;
 
   #(PL_CYCLE * 20);
-  $dumpfile("fpgaothello.vcd");
-  $dumpvars(0, feed);
+  $dumpfile("top.vcd");
+  $dumpvars(0, branch_feeder);
 
   tsk_check();
   

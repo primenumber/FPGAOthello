@@ -58,7 +58,14 @@ logic [15:0] task_id0;
 logic [15:0] node_count0;
 
 always_ff @(posedge iCLOCK) begin
-  if (solved) begin
+  if (!enable) begin
+    x0 <= 64'h0;
+    y0 <= 64'hffffffffffffffff;
+    alpha0 <= -8'd64;
+    beta0 <= 8'd64;
+    prev_passed0 <= 1'b1;
+    task_id0 <= 16'hffff;
+  end else if (solved) begin
     x0 <= valid ? ~iOpponent : 64'h0;
     y0 <= valid ? ~iPlayer : 64'hffffffffffffffff;
     alpha0 <= -8'd64;
@@ -489,7 +496,7 @@ always_ff @(posedge iCLOCK) begin
         score7 <= score6;
         is_commit7 <= 1'b0;
         stack_index7 <= stack_index6;
-        is_moved7 <= 1'b0;
+        is_moved7 <= 1'b1;
         solved <= 1'b0;
         res <= 8'h0;
         node_count7 <= node_count6;
@@ -499,7 +506,7 @@ always_ff @(posedge iCLOCK) begin
   end else begin
     is_commit7 <= 1'b0;
     stack_index7 <= 0;
-    is_moved7 <= 1'b0;
+    is_moved7 <= 1'b1;
     mode7 <= M_START;
     solved <= 1'b0;
     score7 <= score6;

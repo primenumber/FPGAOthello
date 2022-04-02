@@ -1,10 +1,13 @@
 module fifo 
-#(parameter width = 40, addr_bits = 3)
+#(
+  parameter int width = 40,
+  parameter int addr_bits = 3
+)
 (
   input clock,
   input reset,
   input ren,
-  output reg [width-1:0] rdata,
+  output [width-1:0] rdata,
   input wen,
   input [width-1:0] wdata,
   output reg [addr_bits:0] count
@@ -34,6 +37,8 @@ always_ff@(posedge clock or posedge reset) begin
   end
 end
 
+assign rdata = count == 0 ? wdata : buffer[raddr[addr_bits-1:0]];
+
 always_ff@(posedge clock or posedge reset) begin
   if (reset) begin
     waddr <= 0;
@@ -60,11 +65,6 @@ always_ff@(posedge clock or posedge reset) begin
     raddr <= 0;
   end else begin
     if (raccept) begin
-      if (count == 0) begin
-        rdata <= wdata;
-      end else begin
-        rdata <= buffer[raddr[addr_bits-1:0]];
-      end
       if (raddr == depth - 1) begin
         raddr <= 0;
       end else begin
@@ -72,7 +72,6 @@ always_ff@(posedge clock or posedge reset) begin
       end
     end else begin
       raddr <= raddr;
-      rdata <= rdata;
     end
   end
 end
